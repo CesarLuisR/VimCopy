@@ -18,9 +18,9 @@ void RemoveTextCommand::undo() {
 }
 
 void CommandManager::executeCommand(std::unique_ptr<Command> cmd) {
-        cmd->execute();
-        _undoStack.push_back(std::move(cmd));
-        _redoStack.clear();
+	cmd->execute();
+	_undoStack.push_back(std::move(cmd));
+	_redoStack.clear();
 }
 
 void CommandManager::undo() {

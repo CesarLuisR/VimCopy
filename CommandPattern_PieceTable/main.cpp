@@ -223,53 +223,23 @@ int main() {
         CommandManager manager;
 
         manager.executeCommand(std::make_unique<InsertTextCommand>(pt, 1, "A"));
-        // Aqui es que esta el error
-        std::cout << "Reverse: " << std::endl;
-        pt.DumpReverse(pt.GetSeqHead());
-
         manager.executeCommand(std::make_unique<RemoveTextCommand>(pt, 3, 2));
-        // Aqui es que esta el error
-        std::cout << "Reverse: " << std::endl;
-        pt.DumpReverse(pt.GetSeqHead());
-
         manager.executeCommand(std::make_unique<InsertTextCommand>(pt, 2, "XYZ"));
         pt.Dump(pt.GetSeqHead());
-        // Aqui es que esta el error
-        std::cout << "Reverse: " << std::endl;
-        pt.DumpReverse(pt.GetSeqHead());
 
         std::cout << "[Esperado] [O:\"1A\" -> A:\"XYZ\" -> O:\"25\"]" << std::endl << std::endl;
 
         std::cout << "-- After undo x3" << std::endl;
         manager.undo();
-        pt.Dump(pt.GetSeqHead());
-        // Aqui es que esta el error
-        std::cout << "Reverse: " << std::endl;
-        pt.DumpReverse(pt.GetSeqHead());
-
+        manager.undo();
         manager.undo();
         pt.Dump(pt.GetSeqHead());
-        // Aqui es que esta el error
-        std::cout << "Reverse: " << std::endl;
-        pt.DumpReverse(pt.GetSeqHead());
-
-        manager.undo();
-        pt.Dump(pt.GetSeqHead());
-        // Aqui es que esta el error
-        std::cout << "Reverse: " << std::endl;
-        pt.DumpReverse(pt.GetSeqHead());
 
         std::cout << "[Esperado] [O:\"12345\"]" << std::endl << std::endl;
 
         std::cout << "-- After redo x2" << std::endl;
-        pt.Dump(pt.GetSeqHead());
-
-        // Aqui es que esta el error
-        std::cout << "Reverse: " << std::endl;
-        pt.DumpReverse(pt.GetSeqHead());
 
         manager.redo();
-        pt.Dump(pt.GetSeqHead());
         manager.redo();
         pt.Dump(pt.GetSeqHead());
         std::cout << "[Esperado] [O:\"1A\" -> O:\"25\"]" << std::endl << std::endl;

@@ -38,12 +38,12 @@ void PieceTable::Dump(const Piece* current) const {
 }
 
 void PieceTable::DumpReverse(const Piece* current) const {
-	// Mover al final de la lista
+	// If we pass the tail as current there is no need of doing this
+	// But xd no time for it
 	while (current && current->next) {
 		current = current->next.get();
 	}
 
-	// Ahora ir hacia atrás usando prev
 	while (current) {
 		const std::string& buf =
 			current->data.source == DataSource::Original
@@ -118,28 +118,20 @@ void PieceTable::InsertText(const std::string& text, int index) {
 				sequence.tail = lastHalf.get();
 
 			// if firstHalf doesnt exists
-			if (current->prev) {
-				newPiece->prev = current->prev;
-			}
 			newPiece->next = std::move(lastHalf);
 
 			if (current->data.length == 0) {
 				if (current->prev) {
 					newPiece->prev = current->prev;  
-
-					// esto podria funcionar
-					//if (current->prev->next)
-						current->prev->next = std::move(newPiece);
-					//else lastHalf = std::move(newPiece);
+					current->prev->next = std::move(newPiece);
 				}
 				else {
 					newPiece->prev = nullptr;        
 					sequence.head = std::move(newPiece);
 				}
 			} else {
-				//if (current->next)
-					current->next = std::move(newPiece);
-				//else lastHalf = std::move(newPiece);
+				newPiece->prev = current;
+				current->next = std::move(newPiece);
 			}
 
 			return;
@@ -221,9 +213,18 @@ void PieceTable::RemoveText(int index, int length) {
 
 			// if both pieces does not exists
 			if (firstSpan->data.length == 0 && lastSpan->data.length == 0) {
-				if (prev)
+				if (prev) {
 					prev->next = std::move(current->next);
-				else sequence.head = std::move(current->next);
+					if (prev->next) {
+						prev->next->prev = prev;
+					}
+				}
+				else {
+					sequence.head = std::move(current->next);
+					if (sequence.head) {
+						sequence.head->prev = nullptr;
+					}
+				}
 				return;
 			}
 
