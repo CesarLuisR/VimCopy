@@ -1,7 +1,5 @@
 #include "PieceTable.h"
 
-#include <iostream>
-
 PieceTable::PieceTable(const std::string& text) :
 	original_buffer(text)
 {
@@ -349,6 +347,27 @@ std::string PieceTable::GetText(int index, int length) const {
 		}
 
 		curPos = pieceEnd;
+		current = current->next.get();
+	}
+
+	return result;
+}
+
+std::string PieceTable::GetText() const {
+	std::string result;
+
+	const Piece* current = sequence.head.get();
+	while (current) {
+		const std::string& buf =
+			current->data.source == DataSource::Original
+			? original_buffer
+			: append_buffer;
+
+		result += buf.substr(
+			current->data.index,
+			current->data.length
+		);
+
 		current = current->next.get();
 	}
 

@@ -1,9 +1,7 @@
-#include <iostream>
+#include "Testing.h"
 
-#include "Command.h"
-#include "PieceTable.h"
 
-int main() {
+void testing() {
     // 1) Lista vacía + append puro
     {
         std::cout << "Test 1 - Vacío + append:" << std::endl;

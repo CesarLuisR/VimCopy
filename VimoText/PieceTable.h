@@ -1,7 +1,8 @@
 #pragma once
+#include <cstdint>
 #include <memory>
 #include <string>
-#include <memory>
+#include <iostream>
 
 enum class DataSource : std::uint8_t {
 	Original, Append
@@ -37,12 +38,11 @@ public:
 	void InsertText(const std::string& text, int index);
 	void RemoveText(int index, int length);
 
-public:
 	static std::unique_ptr<Piece> createPiece(DataSource source, int index, int length);
 
-public:
 	void Dump(const Piece* current) const;
 	void DumpReverse(const Piece* current) const;
 	const Piece* GetSeqHead() const;
 	std::string GetText(int index, int length) const;
+	std::string GetText() const;
 };

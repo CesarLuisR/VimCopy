@@ -127,7 +127,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Command.cpp" />
+    <ClCompile Include="ConsoleUtils.cpp" />
+    <ClCompile Include="Testing.cpp" />
+    <ClCompile Include="PieceTable.cpp" />
     <ClCompile Include="VimoText.cpp" />
+    <ClCompile Include="WindowView.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Command.h" />
+    <ClInclude Include="ConsoleUtils.h" />
+    <ClInclude Include="PieceTable.h" />
+    <ClInclude Include="Testing.h" />
+    <ClInclude Include="WindowView.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
