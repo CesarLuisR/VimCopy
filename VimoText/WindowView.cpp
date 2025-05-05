@@ -8,16 +8,16 @@ WindowsView::WindowsView(std::vector<std::string>& _lines)
     currentY(0),       // Y position of the cursor (row)
     maxX(10),
     startPoint(0),     // Index of first visible line in 'lines'
+	mode(Mode::Visual),
     lines(_lines)      // Reference to the text buffer
-{
-}
+{}
 
 // Render the current view: clear screen, draw line numbers and content
 void WindowsView::Render() {
     cSize = GetConsoleSize();  // Update console dimensions
 
     // Draw each visible line (excluding bottom status row)
-    for (int i = 0; i < cSize.height - 1; ++i) {
+    for (int i = 0; i < cSize.height - 1; i++) {
         int idx = startPoint + i;
         if (idx >= lines.size())
             break;  // No more lines to display
@@ -35,6 +35,8 @@ void WindowsView::Render() {
     }
 
     // Position the cursor at (currentX, currentY)
+    GoTo(0, cSize.height);
+    std::cout << (mode == Mode::Visual ? "Visual Mode" : "Edit Mode");
     GoTo(currentX, currentY);
 }
 
@@ -106,17 +108,99 @@ void WindowsView::XReAdjustment() {
 void WindowsView::GoRight() {
     if (currentX + 3 > lines[currentLine - 1].size() + 10) return;
     
-    GoTo(0, 0);
-    std::cout << lines[currentLine - 1].size();
     GoTo(++currentX, currentY);
     if (currentX > maxX) 
         maxX = currentX;
 }
 
-void WindowsView::GoLeft()
-{
+void WindowsView::GoAllRight() {
+	while (true) {
+		if (currentX + 3 > lines[currentLine - 1].size() + 10) return;
+        GoRight();
+	}
+}
+
+void WindowsView::GoLeft() {
     if (currentX == 10) return;
     GoTo(--currentX, currentY);
     maxX = currentX;
 }
 
+void WindowsView::GoAllLeft() {
+	while (true) {
+        if (currentX == 10) return;
+        GoLeft();
+	}
+}
+
+
+void WindowsView::ChangeMode(const Mode _mode) {
+    if (_mode == Mode::Visual)
+        std::cout << "\033[1 q"; 
+    else std::cout << "\033[6 q";
+    mode = _mode;
+}
+
+void WindowsView::GoTop() {
+	while (true) {
+        DecreaseCurrentLine();
+        if (currentLine == 1) break;
+	}
+}
+
+void WindowsView::GoBottom() {
+	while (true) {
+        IncreaseCurrentLine();
+        if (currentLine == lines.size()) break;
+	}
+}
+
+
+void WindowsView::UpdateLines(std::vector<std::string>& _lines) {
+    lines = _lines;
+}
+
+unsigned long int WindowsView::GetCurrentPos() const {
+    unsigned long int currentPos = 0;
+    for (int i = 0; i < currentLine - 1; i++)
+        currentPos += lines[i].size();
+    currentPos += currentX - 10;
+    return currentPos;
+}
+
+void WindowsView::VisualCommands() {
+    switch (GetKey()) {
+    case 'j': // Down
+        IncreaseCurrentLine();
+        break;
+    case 'k': // Up
+        DecreaseCurrentLine();
+        break;
+    case 'l': 
+        GoRight();
+        break;
+    case 'h':
+        GoLeft();
+        break;
+    case 'i': {
+        ChangeMode(Mode::Edit);
+        Render();
+        break;
+    }
+    case ':': {
+        char c = GetKey();
+        if (c == 'q') exit(0);
+        break;
+    }
+    case 'g': {
+        char c = GetKey();
+        if (c == 'g') GoTop();
+        break;
+    }
+    case 'G':
+        GoBottom();
+        break;
+    default:
+        break;
+    }
+}

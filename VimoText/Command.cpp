@@ -1,11 +1,26 @@
 #include "Command.h"
+#include "WindowView.h"
 
 void InsertTextCommand::execute() {
 	_pt.InsertText(_text, _index);
+
+    if (_text == "\n") {
+        _view.IncreaseCurrentLine();
+        _view.GoAllLeft();
+    } else {
+		_view.GoRight();
+    }
 }
 
 void InsertTextCommand::undo() {
 	_pt.RemoveText(_index, _text.size());
+
+    if (_text == "\n") {
+        _view.DecreaseCurrentLine();
+
+    } else {
+		_view.GoLeft();
+    }
 }
 
 void RemoveTextCommand::execute() {

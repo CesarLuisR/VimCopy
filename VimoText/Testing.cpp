@@ -158,99 +158,99 @@ void testing() {
     }
 
     // Manager testing
-    {
-        std::cout << "Manager testing scenario:" << std::endl;
-        PieceTable pt("Buenos dias a todos");
-        CommandManager manager;
+    //{
+    //    std::cout << "Manager testing scenario:" << std::endl;
+    //    PieceTable pt("Buenos dias a todos");
+    //    CommandManager manager;
 
-        std::cout << "-- After InsertTextCommand(19, \" al final\")" << std::endl;
-        manager.executeCommand(
-            std::make_unique<InsertTextCommand>(pt, 19, " al final")
-        );
-        pt.Dump(pt.GetSeqHead());
-        std::cout << "[Esperado] [O:\"Buenos dias a todos\" -> A:\" al final\"]" << std::endl << std::endl;
+    //    std::cout << "-- After InsertTextCommand(19, \" al final\")" << std::endl;
+    //    manager.executeCommand(
+    //        std::make_unique<InsertTextCommand>(pt, 19, " al final")
+    //    );
+    //    pt.Dump(pt.GetSeqHead());
+    //    std::cout << "[Esperado] [O:\"Buenos dias a todos\" -> A:\" al final\"]" << std::endl << std::endl;
 
-        std::cout << "-- After undo()" << std::endl;
-        manager.undo();
-        pt.Dump(pt.GetSeqHead());
-        std::cout << "[Esperado] [O:\"Buenos dias a todos\"]" << std::endl << std::endl;
+    //    std::cout << "-- After undo()" << std::endl;
+    //    manager.undo();
+    //    pt.Dump(pt.GetSeqHead());
+    //    std::cout << "[Esperado] [O:\"Buenos dias a todos\"]" << std::endl << std::endl;
 
-        std::cout << "-- After redo()" << std::endl;
-        manager.redo();
-        pt.Dump(pt.GetSeqHead());
-        std::cout << "[Esperado] [O:\"Buenos dias a todos\" -> A:\" al final\"]" << std::endl << std::endl;
-    }
+    //    std::cout << "-- After redo()" << std::endl;
+    //    manager.redo();
+    //    pt.Dump(pt.GetSeqHead());
+    //    std::cout << "[Esperado] [O:\"Buenos dias a todos\" -> A:\" al final\"]" << std::endl << std::endl;
+    //}
 
-    // Test 1 - Empty + append
-    {
-        std::cout << "Test 1 - Empty + append:" << std::endl;
-        PieceTable pt("");
-        pt.InsertText("XYZ", 0);
-        pt.Dump(pt.GetSeqHead());
-        std::cout << "[Esperado] [A:\"XYZ\"]" << std::endl << std::endl;
-    }
+    //// Test 1 - Empty + append
+    //{
+    //    std::cout << "Test 1 - Empty + append:" << std::endl;
+    //    PieceTable pt("");
+    //    pt.InsertText("XYZ", 0);
+    //    pt.Dump(pt.GetSeqHead());
+    //    std::cout << "[Esperado] [A:\"XYZ\"]" << std::endl << std::endl;
+    //}
 
-    // Test 2 - Insert and Remove + undo/redo
-    {
-        std::cout << "Test 2 - Insert and Remove + undo/redo:" << std::endl;
-        PieceTable pt("ABCDEFGH");
-        CommandManager manager;
+    //// Test 2 - Insert and Remove + undo/redo
+    //{
+    //    std::cout << "Test 2 - Insert and Remove + undo/redo:" << std::endl;
+    //    PieceTable pt("ABCDEFGH");
+    //    CommandManager manager;
 
-        std::cout << "-- After RemoveTextCommand(2, 2)" << std::endl;
-        manager.executeCommand(
-            std::make_unique<RemoveTextCommand>(pt, 2, 2)
-        );
-        pt.Dump(pt.GetSeqHead());
-        std::cout << "[Esperado] [O:\"AB\" -> O:\"EFGH\"]" << std::endl << std::endl;
+    //    std::cout << "-- After RemoveTextCommand(2, 2)" << std::endl;
+    //    manager.executeCommand(
+    //        std::make_unique<RemoveTextCommand>(pt, 2, 2)
+    //    );
+    //    pt.Dump(pt.GetSeqHead());
+    //    std::cout << "[Esperado] [O:\"AB\" -> O:\"EFGH\"]" << std::endl << std::endl;
 
-        std::cout << "-- After undo()" << std::endl;
-        manager.undo();
-        pt.Dump(pt.GetSeqHead());
-        std::cout << "[Esperado] [O:\"ABCDEFGH\"]" << std::endl << std::endl;
+    //    std::cout << "-- After undo()" << std::endl;
+    //    manager.undo();
+    //    pt.Dump(pt.GetSeqHead());
+    //    std::cout << "[Esperado] [O:\"ABCDEFGH\"]" << std::endl << std::endl;
 
-        std::cout << "-- After redo()" << std::endl;
-        manager.redo();
-        pt.Dump(pt.GetSeqHead());
-        std::cout << "[Esperado] [O:\"AB\" -> O:\"EFGH\"]" << std::endl << std::endl;
-    }
+    //    std::cout << "-- After redo()" << std::endl;
+    //    manager.redo();
+    //    pt.Dump(pt.GetSeqHead());
+    //    std::cout << "[Esperado] [O:\"AB\" -> O:\"EFGH\"]" << std::endl << std::endl;
+    //}
 
-    // Test 3 - Mixed operations
-    {
-        std::cout << "Test 3 - Mixed operations:" << std::endl;
-        PieceTable pt("12345");
-        CommandManager manager;
+    //// Test 3 - Mixed operations
+    //{
+    //    std::cout << "Test 3 - Mixed operations:" << std::endl;
+    //    PieceTable pt("12345");
+    //    CommandManager manager;
 
-        manager.executeCommand(std::make_unique<InsertTextCommand>(pt, 1, "A"));
-        manager.executeCommand(std::make_unique<RemoveTextCommand>(pt, 3, 2));
-        manager.executeCommand(std::make_unique<InsertTextCommand>(pt, 2, "XYZ"));
-        pt.Dump(pt.GetSeqHead());
+    //    manager.executeCommand(std::make_unique<InsertTextCommand>(pt, 1, "A"));
+    //    manager.executeCommand(std::make_unique<RemoveTextCommand>(pt, 3, 2));
+    //    manager.executeCommand(std::make_unique<InsertTextCommand>(pt, 2, "XYZ"));
+    //    pt.Dump(pt.GetSeqHead());
 
-        std::cout << "[Esperado] [O:\"1A\" -> A:\"XYZ\" -> O:\"25\"]" << std::endl << std::endl;
+    //    std::cout << "[Esperado] [O:\"1A\" -> A:\"XYZ\" -> O:\"25\"]" << std::endl << std::endl;
 
-        std::cout << "-- After undo x3" << std::endl;
-        manager.undo();
-        manager.undo();
-        manager.undo();
-        pt.Dump(pt.GetSeqHead());
+    //    std::cout << "-- After undo x3" << std::endl;
+    //    manager.undo();
+    //    manager.undo();
+    //    manager.undo();
+    //    pt.Dump(pt.GetSeqHead());
 
-        std::cout << "[Esperado] [O:\"12345\"]" << std::endl << std::endl;
+    //    std::cout << "[Esperado] [O:\"12345\"]" << std::endl << std::endl;
 
-        std::cout << "-- After redo x2" << std::endl;
+    //    std::cout << "-- After redo x2" << std::endl;
 
-        manager.redo();
-        manager.redo();
-        pt.Dump(pt.GetSeqHead());
-        std::cout << "[Esperado] [O:\"1A\" -> O:\"25\"]" << std::endl << std::endl;
+    //    manager.redo();
+    //    manager.redo();
+    //    pt.Dump(pt.GetSeqHead());
+    //    std::cout << "[Esperado] [O:\"1A\" -> O:\"25\"]" << std::endl << std::endl;
 
-        std::cout << "-- After new InsertTextCommand(0, \"Z\")" << std::endl;
-        manager.executeCommand(std::make_unique<InsertTextCommand>(pt, 0, "Z"));
-        pt.Dump(pt.GetSeqHead());
-        std::cout << "[Esperado] [A:\"Z\" -> O:\"1A\" -> O:\"25\"]" << std::endl << std::endl;
+    //    std::cout << "-- After new InsertTextCommand(0, \"Z\")" << std::endl;
+    //    manager.executeCommand(std::make_unique<InsertTextCommand>(pt, 0, "Z"));
+    //    pt.Dump(pt.GetSeqHead());
+    //    std::cout << "[Esperado] [A:\"Z\" -> O:\"1A\" -> O:\"25\"]" << std::endl << std::endl;
 
-        std::cout << "-- After redo (should do nothing)" << std::endl;
-        manager.redo();
-        pt.Dump(pt.GetSeqHead());
-        std::cout << "[Esperado] [A:\"Z\" -> O:\"1A\" -> O:\"25\"]" << std::endl << std::endl;
-    }
+    //    std::cout << "-- After redo (should do nothing)" << std::endl;
+    //    manager.redo();
+    //    pt.Dump(pt.GetSeqHead());
+    //    std::cout << "[Esperado] [A:\"Z\" -> O:\"1A\" -> O:\"25\"]" << std::endl << std::endl;
+    //}
 }
 

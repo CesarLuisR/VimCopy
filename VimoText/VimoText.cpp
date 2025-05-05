@@ -1,21 +1,30 @@
 #include <vector>
 
+#include "Command.h"
 #include "ConsoleUtils.h"
 #include "PieceTable.h"
 #include "fstream"
 #include "WindowView.h"
 
-void Render(std::vector<std::string>& lines, int start) {
-	std::string content;
+std::vector<std::string> getLines(const std::string& text) {
+	std::vector<std::string> lines;
+	std::string line;
 
-	ConsoleSize cSize = GetConsoleSize();
-	for (int i = start; i < start + cSize.height - 1; i++) {
-		content.append(lines[i]);
+	for (int i = 0; i < text.size(); i++) {
+		if (text[i] == '\n') {
+			line.push_back(text[i]);
+			lines.emplace_back(line);
+			line.clear();
+		} 
+		else {
+			 line.push_back(text[i]);
+		}
 	}
 
-	ClearScreen();
-	std::cout << content;
-	GoTo(0, 0);
+	if (!line.empty()) {
+		lines.emplace_back(line);
+	}
+	return lines;
 }
 
 int main(int argc, char* argv[]) {
@@ -32,43 +41,73 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::string text;
-	std::vector<std::string> lines;
 	std::string line;
-	while (std::getline(file, line)) {
+	while (std::getline(file, line))
 		text.append(line + '\n');
-		lines.emplace_back(line + '\n');
-	}
 
 	file.close();
 
-	PieceTable pt = PieceTable(text);
+	PieceTable pt(text);
+	CommandManager cmdMan;
+
+	auto lines = getLines(pt.GetText());
 	WindowsView view = WindowsView(lines);
 
-	//int currentLine = 1;
-	//int currentX = 0, currentY = 0;
-	//Render(lines, currentLine - 1);
-
-	view.Render();
-
+	// Changing the cursor style to visual mode
+	std::cout << "\033[1 q"; 
 	while (true) {
-		switch (GetKey()) {
-		case 'j': // Down
-			view.IncreaseCurrentLine();
-			break;
-		case 'k': // Up
-			view.DecreaseCurrentLine();
-			break;
-		case 'l': // Right
-			view.GoRight();
-			break;
-		case 'h':
-			view.GoLeft();
-			break;
-		case 'x':
-			exit(0);
+		lines = getLines(pt.GetText());
+		view.UpdateLines(lines);
 
-		default:
-			break;
+		view.Render();
+
+		bool nose = false;
+
+		while (true) {
+			if (nose) break;
+
+			if (view.mode == Mode::Visual)
+				view.VisualCommands();
+			else {
+				char c = GetKey();
+				switch (c) {
+				case 27: // esc
+					view.ChangeMode(Mode::Visual);
+					view.Render();
+					break;
+				case 13: { // enter
+					nose = true;
+					cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
+						pt, view.GetCurrentPos(), std::string(1, '\n'), view
+					));
+					break;
+				}
+				case 26: {  
+					nose = true;
+					cmdMan.undo();
+					break;
+				}
+				case 25: {
+					nose = true;
+					cmdMan.redo();
+					break;
+				}
+				case 8: { // backspace
+					nose = true;
+					cmdMan.executeCommand(std::make_unique<RemoveTextCommand>(
+						pt, view.GetCurrentPos(), 1, view
+					));
+					view.GoLeft();
+					break;
+				}
+				default: // normal entry
+					nose = true;
+					cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
+						pt, view.GetCurrentPos(), std::string(1, c), view
+					));
+					break;
+				}
+			}
 		}
 	}
 }
