@@ -1,35 +1,95 @@
 #include "Command.h"
+
+#include "Utils.h"
 #include "WindowView.h"
 
 void InsertTextCommand::execute() {
 	_pt.InsertText(_text, _index);
 
+    if (_formerLine == 0) {
+		_formerX = _view.GetCurrentX();
+		_formerY = _view.GetCurrentY();
+		_formerLine = _view.GetCurrentLine();
+		_formerStart = _view.GetCurrentStart();
+    }
+
     if (_text == "\n") {
+        auto lines = GetLines(_pt.GetText());
+        _view.UpdateLines(lines);
+
         _view.IncreaseCurrentLine();
         _view.GoAllLeft();
     } else {
-		_view.GoRight();
+        _view.SetCurrentX(_view.GetCurrentX() + 1);
+		_view.SetCurrentY(_formerY);
+		_view.SetCurrentLine(_formerLine);
+		_view.SetCurrentStart(_formerStart);
     }
 }
 
 void InsertTextCommand::undo() {
 	_pt.RemoveText(_index, _text.size());
 
-    if (_text == "\n") {
-        _view.DecreaseCurrentLine();
-
-    } else {
-		_view.GoLeft();
-    }
+    _view.SetCurrentX(_formerX);
+    _view.SetCurrentY(_formerY);
+    _view.SetCurrentLine(_formerLine);
+    _view.SetCurrentStart(_formerStart);
 }
 
 void RemoveTextCommand::execute() {
+    if (_formerLine == 0) {
+		_formerX = _view.GetCurrentX();
+		_formerY = _view.GetCurrentY();
+		_formerLine = _view.GetCurrentLine();
+		_formerStart = _view.GetCurrentStart();
+    }
+
 	backup_text = _pt.GetText(_index, _length);
 	_pt.RemoveText(_index, _length);
+
+    _view.SetCurrentX(_formerX);
+    _view.SetCurrentY(_formerY);
+    _view.SetCurrentLine(_formerLine);
+    _view.SetCurrentStart(_formerStart);
 }
 
 void RemoveTextCommand::undo() {
 	_pt.InsertText(backup_text, _index);
+
+    _view.SetCurrentX(_formerX);
+    _view.SetCurrentY(_formerY);
+    _view.SetCurrentLine(_formerLine);
+    _view.SetCurrentStart(_formerStart);
+}
+
+void RemoveLineCommand::execute() {
+    if (_formerLine == 0) {
+		_formerX = _view.GetCurrentX();
+		_formerY = _view.GetCurrentY();
+		_formerLine = _view.GetCurrentLine();
+		_formerStart = _view.GetCurrentStart();
+    }
+
+    int line = _view.GetCurrentLine() - 1;
+    auto lines = _view.GetLines();
+    int lineSize = lines[line].size();
+
+	backup_text = _pt.GetText(_index, lineSize);
+	_pt.RemoveText(_index, lineSize);
+
+    _view.SetCurrentX(_formerX);
+    _view.SetCurrentY(_formerY);
+    _view.SetCurrentLine(_formerLine);
+    _view.SetCurrentStart(_formerStart);
+}
+
+void RemoveLineCommand::undo() {
+	_pt.InsertText(backup_text, _index);
+
+    _view.SetCurrentX(_formerX);
+    _view.SetCurrentY(_formerY);
+    _view.SetCurrentLine(_formerLine);
+    _view.SetCurrentStart(_formerStart);
 }
 
 void CommandManager::executeCommand(std::unique_ptr<Command> cmd) {

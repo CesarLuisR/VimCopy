@@ -14,6 +14,7 @@ WindowsView::WindowsView(std::vector<std::string>& _lines)
 
 // Render the current view: clear screen, draw line numbers and content
 void WindowsView::Render() {
+    std::cout << "\033[?25l";  // Hide cursor
     cSize = GetConsoleSize();  // Update console dimensions
 
     // Draw each visible line (excluding bottom status row)
@@ -34,10 +35,13 @@ void WindowsView::Render() {
         std::cout << lines[idx];
     }
 
-    // Position the cursor at (currentX, currentY)
-    GoTo(0, cSize.height);
+    GoTo(0, cSize.height - 1);
+	std::cout << std::string(cSize.width, ' ');
+    GoTo(0, cSize.height - 1);
     std::cout << (mode == Mode::Visual ? "Visual Mode" : "Edit Mode");
+
     GoTo(currentX, currentY);
+    std::cout << "\033[?25h";  // Show cursor
 }
 
 // Move cursor down by one line; scroll view if needed
@@ -105,12 +109,14 @@ void WindowsView::XReAdjustment() {
         currentX = lines[currentLine - 1].size() + 10 - 2;
 }
 
-void WindowsView::GoRight() {
-    if (currentX + 3 > lines[currentLine - 1].size() + 10) return;
+bool WindowsView::GoRight() {
+    if (currentX + 3 > lines[currentLine - 1].size() + 10) return false;
     
     GoTo(++currentX, currentY);
     if (currentX > maxX) 
         maxX = currentX;
+
+    return true;
 }
 
 void WindowsView::GoAllRight() {
@@ -120,10 +126,11 @@ void WindowsView::GoAllRight() {
 	}
 }
 
-void WindowsView::GoLeft() {
-    if (currentX == 10) return;
+bool WindowsView::GoLeft() {
+    if (currentX == 10) return false;
     GoTo(--currentX, currentY);
     maxX = currentX;
+    return true;
 }
 
 void WindowsView::GoAllLeft() {
@@ -132,7 +139,6 @@ void WindowsView::GoAllLeft() {
         GoLeft();
 	}
 }
-
 
 void WindowsView::ChangeMode(const Mode _mode) {
     if (_mode == Mode::Visual)
@@ -155,9 +161,48 @@ void WindowsView::GoBottom() {
 	}
 }
 
+int WindowsView::GetCurrentX() {
+    return currentX;
+}
+
+void WindowsView::SetCurrentX(int x) {
+    currentX = x;
+    GoTo(currentX, currentY);
+    maxX = currentX;
+}
+
+int WindowsView::GetCurrentLine() {
+    return currentLine;
+}
+
+void WindowsView::SetCurrentLine(int line) {
+    currentLine = line;
+}
+
+int WindowsView::GetCurrentStart() {
+    return startPoint;
+}
+
+void WindowsView::SetCurrentStart(int start) {
+    startPoint = start;
+}
+
+int WindowsView::GetCurrentY() {
+    return currentY;
+}
+
+void WindowsView::SetCurrentY(int y) {
+    currentY = y;
+    GoTo(currentX, currentY);
+}
+
 
 void WindowsView::UpdateLines(std::vector<std::string>& _lines) {
     lines = _lines;
+}
+
+const std::vector<std::string>& WindowsView::GetLines() {
+    return lines;
 }
 
 unsigned long int WindowsView::GetCurrentPos() const {
@@ -168,15 +213,15 @@ unsigned long int WindowsView::GetCurrentPos() const {
     return currentPos;
 }
 
-void WindowsView::VisualCommands() {
-    switch (GetKey()) {
+void WindowsView::VisualCommands(char c) {
+    switch (c) {
     case 'j': // Down
         IncreaseCurrentLine();
         break;
     case 'k': // Up
         DecreaseCurrentLine();
         break;
-    case 'l': 
+    case 'l':
         GoRight();
         break;
     case 'h':
@@ -187,19 +232,100 @@ void WindowsView::VisualCommands() {
         Render();
         break;
     }
+    case 'a': {
+        currentX++;
+        ChangeMode(Mode::Edit);
+        Render();
+        break;
+    }
     case ':': {
-        char c = GetKey();
-        if (c == 'q') exit(0);
+        char c = GetKey(false);
+        if (c == 'q') {
+            GoTo(0, 0);
+            ClearScreen();
+            exit(0);
+        }
         break;
     }
     case 'g': {
-        char c = GetKey();
+        char c = GetKey(false);
         if (c == 'g') GoTop();
         break;
     }
     case 'G':
         GoBottom();
         break;
+
+    case 'I': {
+        GoAllLeft();
+        ChangeMode(Mode::Edit);
+        break;
+    }
+    case 'A': {
+        GoAllRight();
+        currentX++;
+        ChangeMode(Mode::Edit);
+        Render();
+        break;
+    }
+    case 'w': {
+        int lineN = GetCurrentLine() - 1;
+        auto line = lines[lineN];
+        int x = GetCurrentX() - 10;
+
+        while (true) {
+            x = GetCurrentX() - 10;
+            if (!GoRight()) {
+                IncreaseCurrentLine();
+                GoAllLeft();
+				lineN = GetCurrentLine() - 1;
+				line = lines[lineN];
+				x = GetCurrentX() - 10;
+
+                if (line[x] != ' ' && line[x] != '\r') break;
+                continue;
+            }
+
+            if (line[x + 1] == '.') break;
+            if (line[x] == '.') break;
+            if (line[x + 1] == '(') break;
+            if (line[x + 1] == '<') break;
+            if (line[x] == ' ' && line[x + 1] != ' ') break;
+        }
+        break;
+    }
+    case 'b': {
+        int lineN = GetCurrentLine() - 1;
+        auto line = lines[lineN];
+        int x = GetCurrentX() - 10;
+
+        while (true) {
+            x = GetCurrentX() - 10;
+
+            if (!GoLeft()) {
+                if (GetCurrentLine() > 1) {
+                    DecreaseCurrentLine();
+                    GoAllRight();
+                    lineN = GetCurrentLine() - 1;
+                    line = lines[lineN];
+                    continue;
+                }
+                break;
+            }
+
+            if (x - 1 < 0) {
+                break;
+            }
+
+            if (line[x - 1] == '.') break;
+            if (line[x] == '.') break;
+            if (line[x - 1] == '(') break;
+            if (line[x - 1] == '<') break;
+
+            if (line[x] == ' ' && line[x - 1] != ' ') break;
+        }
+        break;
+    }
     default:
         break;
     }

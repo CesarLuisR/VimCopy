@@ -194,19 +194,17 @@ void PieceTable::RemoveText(int index, int length) {
 
 				if (firstSpan->next->next)
 					firstSpan->next->next->prev = firstSpan->next.get();
-				else {
-					sequence.tail = firstSpan->next.get();
+				else sequence.tail = firstSpan->next.get();
 
-					if (current->prev) {
-						firstSpan->prev = current->prev;
-						current->prev->next = std::move(firstSpan);
-					}
-					else {
-						firstSpan->prev = nullptr;
-						sequence.head = std::move(firstSpan);
-					}
-					return;
+				if (current->prev) {
+					firstSpan->prev = current->prev;
+					current->prev->next = std::move(firstSpan);
 				}
+				else {
+					firstSpan->prev = nullptr;
+					sequence.head = std::move(firstSpan);
+				}
+				return;
 			}
 
 			// if both pieces does not exists
@@ -289,6 +287,9 @@ void PieceTable::RemoveText(int index, int length) {
 				current->data.index + ((index + length) - pieceStart),
 				pieceEnd - (index + length)
 			);
+
+			if (current->next) current->next->prev = lastPiece.get();
+			else sequence.tail = current;
 
 			lastPiece->next = std::move(current->next);
 			break;
@@ -373,4 +374,3 @@ std::string PieceTable::GetText() const {
 
 	return result;
 }
-

@@ -1,10 +1,10 @@
-#include "Testing.h"
+﻿#include "Testing.h"
 
 
 void testing() {
-    // 1) Lista vac�a + append puro
+    // 1) Lista vacía + append puro
     {
-        std::cout << "Test 1 - Vac�o + append:" << std::endl;
+        std::cout << "Test 1 - Vacío + append:" << std::endl;
         PieceTable pt("");
         pt.InsertText("XYZ", 0);
         pt.Dump(pt.GetSeqHead());
@@ -57,9 +57,9 @@ void testing() {
         std::cout << "[Esperado] ABCDEZ" << std::endl << std::endl;
     }
 
-    // 7) Split gen�rico
+    // 7) Split genérico
     {
-        std::cout << "Test 7 - Split gen�rico:" << std::endl;
+        std::cout << "Test 7 - Split genérico:" << std::endl;
         PieceTable pt("12345");
         pt.InsertText("+++", 2);
         pt.Dump(pt.GetSeqHead());
@@ -77,16 +77,16 @@ void testing() {
     }
 
     // REMOVING
-    // 1) Eliminar en lista vac�a (no debe hacer nada)
+    // 1) Eliminar en lista vacía (no debe hacer nada)
     {
-        std::cout << "Test 1 - Remove en vac�o:" << std::endl;
+        std::cout << "Test 1 - Remove en vacío:" << std::endl;
         PieceTable pt("");
-        pt.RemoveText(0, 1);  // Intento eliminar en posici�n inexistente
+        pt.RemoveText(0, 1);  // Intento eliminar en posición inexistente
         pt.Dump(pt.GetSeqHead());
         std::cout << "[Esperado] " << std::endl << std::endl;  // Nada
     }
 
-    // 2) Eliminar al inicio de pieza �nica
+    // 2) Eliminar al inicio de pieza única
     {
         std::cout << "Test 2 - Remove al inicio:" << std::endl;
         PieceTable pt("ABCDEF");
@@ -95,7 +95,7 @@ void testing() {
         std::cout << "[Esperado] BCDEF" << std::endl << std::endl;
     }
 
-    // 3) Eliminar al final de pieza �nica
+    // 3) Eliminar al final de pieza única
     {
         std::cout << "Test 3 - Remove al final:" << std::endl;
         PieceTable pt("ABCDEF");
@@ -104,7 +104,7 @@ void testing() {
         std::cout << "[Esperado] ABCDE" << std::endl << std::endl;
     }
 
-    // 4) Eliminar en medio de pieza �nica (split)
+    // 4) Eliminar en medio de pieza única (split)
     {
         std::cout << "Test 4 - Remove en medio:" << std::endl;
         PieceTable pt("ABCDEF");
@@ -113,9 +113,9 @@ void testing() {
         std::cout << "[Esperado] ABEF" << std::endl << std::endl;
     }
 
-    // 5) Eliminar abarcando m�ltiples piezas
+    // 5) Eliminar abarcando múltiples piezas
     {
-        std::cout << "Test 5 - Remove en m�ltiples piezas:" << std::endl;
+        std::cout << "Test 5 - Remove en múltiples piezas:" << std::endl;
         PieceTable pt("ABCDEF");
         pt.InsertText("XYZ", 3);  // ABCXYZDEF
         pt.Dump(pt.GetSeqHead());
@@ -134,9 +134,9 @@ void testing() {
         std::cout << "[Esperado] ABCDEF" << std::endl << std::endl;
     }
 
-    // 7) Eliminar en l�mite exacto de piezas
+    // 7) Eliminar en límite exacto de piezas
     {
-        std::cout << "Test 7 - Remove en l�mite:" << std::endl;
+        std::cout << "Test 7 - Remove en límite:" << std::endl;
         PieceTable pt("ABCDEF");
         pt.InsertText("XYZ", 3);  // ABC XYZ DEF
         pt.RemoveText(3, 0);      // No-op
@@ -145,9 +145,9 @@ void testing() {
         std::cout << "[Esperado] ABCXYZ" << std::endl << std::endl;
     }
 
-    // 8) Eliminar m�ltiples piezas completas
+    // 8) Eliminar múltiples piezas completas
     {
-        std::cout << "Test 8 - Remove m�ltiples piezas:" << std::endl;
+        std::cout << "Test 8 - Remove múltiples piezas:" << std::endl;
         PieceTable pt("");
         pt.InsertText("A", 0);
         pt.InsertText("B", 1);
@@ -155,6 +155,130 @@ void testing() {
         pt.RemoveText(0, 3);    // Elimina todo
         pt.Dump(pt.GetSeqHead());
         std::cout << "[Esperado] " << std::endl << std::endl;  // Nada
+    }
+
+    // 9) Eliminar rango que empieza antes y acaba dentro de la misma pieza
+    {
+        std::cout << "Test 9 - Remove rango parcial en pieza:" << std::endl;
+        PieceTable pt("ABCDEFGH");
+        // Elimina 'CDE' (índice 2, longitud 3) → ABFGH
+        pt.RemoveText(2, 3);
+        pt.Dump(pt.GetSeqHead());
+        std::cout << "[Esperado] ABFGH" << std::endl << std::endl;
+    }
+
+    // 10) Eliminar texto que cruza el punto de inserción de un Insert previo
+    {
+        std::cout << "Test 10 - Remove cruzando inserción previa:" << std::endl;
+        PieceTable pt("123456789");
+        pt.InsertText("ABC", 4);   // 1234ABC56789
+        // Elimina desde pos 2 longitud 7 → elimina '34ABC56' → 12789
+        pt.RemoveText(2, 7);
+        pt.Dump(pt.GetSeqHead());
+        std::cout << "[Esperado] 12789" << std::endl << std::endl;
+    }
+
+    // 11) Eliminar más allá del final (should clamp)
+    {
+        std::cout << "Test 11 - Remove más allá del final:" << std::endl;
+        PieceTable pt("WXYZ");
+        // Longitud excesiva; debería eliminar hasta el final → ''
+        pt.RemoveText(1, 100);
+        pt.Dump(pt.GetSeqHead());
+        std::cout << "[Esperado] W" << std::endl << std::endl;
+    }
+
+    // 12) Remove con longitud cero en medio de texto
+    {
+        std::cout << "Test 12 - Remove longitud 0:" << std::endl;
+        PieceTable pt("HELLO");
+        pt.RemoveText(2, 0);  // no-op
+        pt.Dump(pt.GetSeqHead());
+        std::cout << "[Esperado] HELLO" << std::endl << std::endl;
+    }
+
+    // 13) Remove en posición negativa o invalida (debería no hacer nada o lanzar)
+    {
+        std::cout << "Test 13 - Remove posición negativa:" << std::endl;
+        PieceTable pt("TESTING");
+        pt.RemoveText(-5, 3);  // define comportamiento: clamp a 0 o no-op
+        pt.Dump(pt.GetSeqHead());
+        std::cout << "[Esperado] TESTING" << std::endl << std::endl;
+    }
+
+    // 14) Secuencia de múltiples removes encadenados
+    {
+        std::cout << "Test 14 - Multiple removes secuenciales:" << std::endl;
+        PieceTable pt("ABCDEFGHIJ");
+        pt.RemoveText(2, 3);  // ABFGHIJ
+        pt.RemoveText(4, 2);  // ABFGJ
+        pt.RemoveText(1, 1);  // AFGJ
+        pt.Dump(pt.GetSeqHead());
+        std::cout << "[Esperado] AFGJ" << std::endl << std::endl;
+    }
+
+    // 15) Insert intercalado y luego remove en áreas no contiguas
+    {
+        std::cout << "Test 15 - Remove en áreas intercaladas:" << std::endl;
+        PieceTable pt("XXXX");
+        pt.InsertText("111", 2);  // XX111XX
+        pt.InsertText("222", 5);  // XX111222XX
+        pt.RemoveText(2, 2);      // XX1222XX
+        pt.DumpReverse(pt.GetSeqHead());
+        pt.Dump(pt.GetSeqHead());
+        pt.RemoveText(4, 1);      // XX122XX
+        pt.Dump(pt.GetSeqHead());
+        std::cout << "[Esperado] XX122XX" << std::endl << std::endl;
+    }
+
+    // 16) Remove completo tras varias inserciones y eliminaciones
+    {
+        std::cout << "Test 16 - Remove todo tras operaciones mixtas:" << std::endl;
+        PieceTable pt("");
+        pt.InsertText("A", 0);
+        pt.Dump(pt.GetSeqHead());
+        pt.DumpReverse(pt.GetSeqHead());
+
+        pt.InsertText("B", 1);
+        pt.InsertText("C", 2);
+        pt.InsertText("D", 3);      // ABCD
+        pt.Dump(pt.GetSeqHead());
+        pt.DumpReverse(pt.GetSeqHead());
+
+        pt.RemoveText(1, 2);        // A D
+        pt.Dump(pt.GetSeqHead());
+        pt.DumpReverse(pt.GetSeqHead());
+
+        pt.InsertText("XYZ", 1);    // AXYZD
+        pt.Dump(pt.GetSeqHead());
+        pt.DumpReverse(pt.GetSeqHead());
+
+        pt.RemoveText(0, 5);        // ''
+        pt.Dump(pt.GetSeqHead());
+        pt.DumpReverse(pt.GetSeqHead());
+        std::cout << "[Esperado] " << std::endl;
+    }
+
+    // 17) Remove en texto muy largo (performance / integridad)
+    {
+        std::cout << "Test 17 - Remove en texto largo:" << std::endl;
+        std::string longText(1000, 'X');
+        PieceTable pt(longText);
+        pt.RemoveText(450, 100);     // elimina en medio
+        auto head = pt.GetSeqHead();
+        pt.Dump(head);
+        std::cout << "[Esperado] 450 X's + 450 X's" << std::endl << std::endl;
+    }
+
+    // 18) Remove que une dos piezas resultando en merge
+    {
+        std::cout << "Test 18 - Remove que causa merge de piezas:" << std::endl;
+        PieceTable pt("HELLO");
+        pt.InsertText("123", 2);   // HE123LLO
+        // Al eliminar '123', las piezas "HE" y "LLO" deben fusionarse
+        pt.RemoveText(2, 3);
+        pt.Dump(pt.GetSeqHead());
+        std::cout << "[Esperado] HELLO" << std::endl << std::endl;
     }
 
     // Manager testing

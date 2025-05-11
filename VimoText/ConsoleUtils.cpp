@@ -37,23 +37,34 @@ void GoTo(int x, int y) {
 #endif
 }
 
-#ifndef _WIN32
-char _getch() {
+char GetKey(bool nonBlocking = false) {
+#ifdef _WIN32
+	if (nonBlocking) {
+		if (_kbhit()) return _getch();
+		return 0; // Nada presionado
+	}
+
+	return _getch(); // Bloqueante
+#else
 	struct termios oldt, newt;
-	char ch;
+	char ch = 0;
 	tcgetattr(STDIN_FILENO, &oldt);
 	newt = oldt;
 	newt.c_lflag &= ~(ICANON | ECHO);
 	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-	ch = getchar();
-	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-	return ch;
-}
-#endif
 
-char GetKey() {
-	char c = _getch();
-	return c;
+	int oldFlags = fcntl(STDIN_FILENO, F_GETFL, 0);
+	if (nonBlocking) {
+		fcntl(STDIN_FILENO, F_SETFL, oldFlags | O_NONBLOCK);
+	}
+
+	int result = read(STDIN_FILENO, &ch, 1);
+
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	fcntl(STDIN_FILENO, F_SETFL, oldFlags);
+
+	return (result > 0) ? ch : 0;
+#endif
 }
 
 void ClearScreen() {

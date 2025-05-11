@@ -131,6 +131,7 @@
     <ClCompile Include="ConsoleUtils.cpp" />
     <ClCompile Include="Testing.cpp" />
     <ClCompile Include="PieceTable.cpp" />
+    <ClCompile Include="Utils.cpp" />
     <ClCompile Include="VimoText.cpp" />
     <ClCompile Include="WindowView.cpp" />
   </ItemGroup>
@@ -139,6 +140,7 @@
     <ClInclude Include="ConsoleUtils.h" />
     <ClInclude Include="PieceTable.h" />
     <ClInclude Include="Testing.h" />
+    <ClInclude Include="Utils.h" />
     <ClInclude Include="WindowView.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
