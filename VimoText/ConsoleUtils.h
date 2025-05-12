@@ -18,5 +18,5 @@ struct ConsoleSize {
 
 ConsoleSize GetConsoleSize();
 void GoTo(int x, int y);
-char GetKey(bool nonBlocking);
+char GetKey();
 void ClearScreen();

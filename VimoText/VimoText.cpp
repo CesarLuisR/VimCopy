@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	std::ifstream file(argv[1], std::ios::binary);
+	std::ifstream file(argv[1]);
 	if (!file.is_open()) {
 		std::cerr << "No se pudo abrir el archivo\n";
 		return 1;
@@ -51,26 +51,101 @@ int main(int argc, char* argv[]) {
 			if (nose) break;
 
 			if (view.mode == Mode::Visual) {
-				char c = GetKey(false);
+				char c = GetKey();
 				switch (c) {
 				case 'O': {
 					nose = true;
 					view.GoAllLeft();
+					view.ChangeMode(Mode::Edit);
+
+					int lineN = view.GetCurrentLine() - 1;
+					auto line = lines[lineN];
+					if (line.size() == 1) {
+						cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
+							pt, view.GetCurrentPos(), std::string(1, '\n'), view
+						));
+						view.DecreaseCurrentLine();
+						break;
+					}
+
+					int currX = view.GetCurrentX();
+					bool emptyLine = false;
+
+					view.GoAllLeft();
+
+					int x = view.GetCurrentX() - 10;
+					while (true) {
+						if (line[x] != ' ' && line[x] != '\r') break;
+						if (!view.GoRight()) {
+							emptyLine = true;
+							break;
+						}
+						x = view.GetCurrentX() - 10;
+					}
+
+					view.SetCurrentX(currX);
 					cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
 						pt, view.GetCurrentPos(), std::string(1, '\n'), view
 					));
 					view.DecreaseCurrentLine();
-					view.ChangeMode(Mode::Edit);
+					if (emptyLine || x == 0) break;
+
+					cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
+						pt, view.GetCurrentPos(), std::string(x + 1, ' '), view
+					));
+
+					lines = GetLines(pt.GetText());
+					view.UpdateLines(lines);
+					while (view.GoRight());
+
 					break;
 				}
 				case 'o': {
 					nose = true;
+
+					view.ChangeMode(Mode::Edit);
 					view.GoAllRight();
+					view.SetCurrentX(view.GetCurrentX() + 1);
+
+					int lineN = view.GetCurrentLine() - 1;
+					auto line = lines[lineN];
+					if (line.size() == 1) {
+						cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
+							pt, view.GetCurrentPos(), std::string(1, '\n'), view
+						));
+						break;
+					}
+
+					int currX = view.GetCurrentX();
+					bool emptyLine = false;
+
+					view.GoAllLeft();
+
+					int x = view.GetCurrentX() - 10;
+					while (true) {
+						if (line[x] != ' ' && line[x] != '\r') break;
+						if (!view.GoRight()) {
+							emptyLine = true;
+							break;
+						}
+						x = view.GetCurrentX() - 10;
+					}
+
+					view.SetCurrentX(currX);
 					cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
 						pt, view.GetCurrentPos(), std::string(1, '\n'), view
 					));
-					view.ChangeMode(Mode::Edit);
-					view.GoAllLeft();
+
+					if (emptyLine || x == 0) break;
+
+					cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
+						pt, view.GetCurrentPos(), std::string(x + 1, ' '), view
+					));
+
+					lines = GetLines(pt.GetText());
+					view.UpdateLines(lines);
+					while (view.GoRight());
+
 					break;
 				}
 				case 'u': {
@@ -91,7 +166,7 @@ int main(int argc, char* argv[]) {
 					break;
 				}
 				case 'd': {
-					char c = GetKey(false);
+					char c = GetKey();
 					switch (c) {
 					case 'd': {
 						view.GoAllLeft();
@@ -113,22 +188,21 @@ int main(int argc, char* argv[]) {
 						int x = view.GetCurrentX() - 10;
 
 						int minCount = INT_MAX;
+						const char delims[] = {
+							'.', ' ', '(', '<',
+							'>', ')', ',', ';',
+							':', '[', ']', '{',
+							'}', '/', '\\', '=',
+							'+', '-', '*', '%',
+							'&', '|', '\'', '"'
+						};
 
-						int val = CountPosTillNext(line, x, '.');
-						if (val > 0 && val < minCount)
-							minCount = val;
-
-						val = CountPosTillNext(line, x, ' ');
-						if (val > 0 && val < minCount)
-							minCount = val;
-
-						val = CountPosTillNext(line, x, '(');
-						if (val > 0 && val < minCount)
-							minCount = val;
-
-						val = CountPosTillNext(line, x, '<');
-						if (val > 0 && val < minCount)
-							minCount = val;
+						for (char d : delims) {
+							int val = CountPosTillNext(line, x, d);
+							if (val > 0 && val < minCount) {
+								minCount = val;
+							}
+						}
 
 						if (line.size() < minCount + 1)
 							minCount = line.size();
@@ -151,7 +225,7 @@ int main(int argc, char* argv[]) {
 				view.VisualCommands(c);
 			}
 			else {
-				char c = GetKey(false);
+				char c = GetKey();
 				switch (c) {
 				case 27: // esc
 					view.ChangeMode(Mode::Visual);
@@ -159,9 +233,46 @@ int main(int argc, char* argv[]) {
 					break;
 				case 13: { // enter
 					nose = true;
+
+					int lineN = view.GetCurrentLine() - 1;
+					auto line = lines[lineN];
+					if (line.size() == 1) {
+						cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
+							pt, view.GetCurrentPos(), std::string(1, '\n'), view
+						));
+						break;
+					}
+
+					int currX = view.GetCurrentX();
+					bool emptyLine = false;
+
+					view.GoAllLeft();
+
+					int x = view.GetCurrentX() - 10;
+					while (true) {
+						if (line[x] != ' ' && line[x] != '\r') break;
+						if (!view.GoRight()) {
+							emptyLine = true;
+							break;
+						}
+						x = view.GetCurrentX() - 10;
+					}
+
+					view.SetCurrentX(currX);
 					cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
 						pt, view.GetCurrentPos(), std::string(1, '\n'), view
 					));
+
+					if (emptyLine || x == 0) break;
+
+					cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
+						pt, view.GetCurrentPos(), std::string(x + 1, ' '), view
+					));
+
+					lines = GetLines(pt.GetText());
+					view.UpdateLines(lines);
+					while (view.GoRight());
+
 					break;
 				}
 				case 26: {
@@ -201,10 +312,13 @@ int main(int argc, char* argv[]) {
 				case '\t': { // tabs
 					nose = true;
 					cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
-						pt, view.GetCurrentPos(), std::string(4, ' '), view
+						pt, view.GetCurrentPos(), std::string(5, ' '), view
 					));
-					for (int i = 0; i < 3; i++)
-						view.GoRight();
+					lines = GetLines(pt.GetText());
+					view.UpdateLines(lines);
+
+					while (view.GoRight());
+
 					break;
 				}
 				default: // normal entry

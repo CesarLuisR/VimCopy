@@ -239,7 +239,7 @@ void WindowsView::VisualCommands(char c) {
         break;
     }
     case ':': {
-        char c = GetKey(false);
+        char c = GetKey();
         if (c == 'q') {
             GoTo(0, 0);
             ClearScreen();
@@ -248,7 +248,7 @@ void WindowsView::VisualCommands(char c) {
         break;
     }
     case 'g': {
-        char c = GetKey(false);
+        char c = GetKey();
         if (c == 'g') GoTop();
         break;
     }
@@ -259,6 +259,14 @@ void WindowsView::VisualCommands(char c) {
     case 'I': {
         GoAllLeft();
         ChangeMode(Mode::Edit);
+        int lineN = GetCurrentLine() - 1;
+        auto line = lines[lineN];
+        int x = GetCurrentX() - 10;
+        while (true) {
+            if (line[x] != ' ' && line[x] != '\r') break;
+            GoRight();
+            x = GetCurrentX() - 10;
+        }
         break;
     }
     case 'A': {
