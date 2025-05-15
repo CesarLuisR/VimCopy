@@ -44,6 +44,8 @@ void WindowsView::Render() {
     std::cout << (mode == Mode::Normal ? "Normal Mode" : "Edit Mode");
 
     GoTo(currentX, currentY);
+
+    if (mode == Mode::Visual) RenderHighlight();
     std::cout << "\033[?25h";  // Show cursor
 }
 
@@ -246,10 +248,9 @@ void WindowsView::VisualCommands(char c) {
     case 'j': { // Down
         if (mode == Mode::Visual) {
             while (GoRight())
-            {
         		selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
-        		RenderHighlight();
-            }
+
+        	//RenderHighlight();
         }
         IncreaseCurrentLine();
         if (mode == Mode::Visual) {
@@ -264,7 +265,7 @@ void WindowsView::VisualCommands(char c) {
         DecreaseCurrentLine();
         if (mode == Mode::Visual) {
             selText.RemoveLine();
-            RenderHighlight();
+            //RenderHighlight();
             maxX = selText.GetFirstPosX();
         }
         break;
@@ -273,7 +274,8 @@ void WindowsView::VisualCommands(char c) {
         if (mode == Mode::Visual) {
             selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
             maxX = selText.GetFirstPosX();
-            RenderHighlight();
+            //RenderHighlight();
+            HighlightOne();
         }
         break;
     case 'h':
@@ -281,7 +283,8 @@ void WindowsView::VisualCommands(char c) {
         if (mode == Mode::Visual) {
             selText.RemovePos();
             maxX = selText.GetFirstPosX();
-            RenderHighlight();
+            //RenderHighlight();
+            HighlightOne();
         }
         break;
     case 'i': {
@@ -396,7 +399,7 @@ void WindowsView::VisualCommands(char c) {
         if (mode == Mode::Visual) break;
         ChangeMode(Mode::Visual);
         selText.AddLine({ currentLine, currentX, currentX, {} });selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
-    		RenderHighlight();
+        Render();
         break;
     }
     case 'V': {
