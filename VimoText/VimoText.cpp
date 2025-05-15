@@ -2,17 +2,20 @@
 #include "ConsoleUtils.h"
 #include "PieceTable.h"
 #include "fstream"
+#include "SelectedText.h"
+#include "thread"
 #include "Testing.h"
 #include "WindowView.h"
 #include "Utils.h"
 
 int main(int argc, char* argv[]) {
-	if (argc < 2) {
-		std::cerr << "Usage: " << argv[0] << " <filename>\n";
-		return 1;
-	}
+	//if (argc < 2) {
+	//	std::cerr << "Usage: " << argv[0] << " <filename>\n";
+	//	return 1;
+	//}
 
-	std::ifstream file(argv[1]);
+	//std::ifstream file(argv[1]);
+	std::ifstream file("./PieceTable.cpp");
 	if (!file.is_open()) {
 		std::cerr << "No se pudo abrir el archivo\n";
 		return 1;
@@ -35,10 +38,15 @@ int main(int argc, char* argv[]) {
 	PieceTable pt(text);
 	CommandManager cmdMan;
 	auto lines = GetLines(pt.GetText());
-	WindowsView view(lines);
+	SelectedText selectedText;
+	WindowsView view(lines, selectedText);
 
 	// Changing the cursor style to visual mode
 	std::cout << "\033[1 q";
+
+	// Visual mode thread
+	std::thread worker;
+
 	while (true) {
 		lines = GetLines(pt.GetText());
 		view.UpdateLines(lines);
@@ -50,10 +58,11 @@ int main(int argc, char* argv[]) {
 		while (true) {
 			if (nose) break;
 
-			if (view.mode == Mode::Visual) {
+			if (view.mode == Mode::Normal || view.mode == Mode::Visual) {
 				char c = GetKey();
 				switch (c) {
 				case 'O': {
+					if (view.mode == Mode::Visual) break;
 					nose = true;
 					view.GoAllLeft();
 					view.ChangeMode(Mode::Edit);
@@ -101,6 +110,7 @@ int main(int argc, char* argv[]) {
 					break;
 				}
 				case 'o': {
+					if (view.mode == Mode::Visual) break;
 					nose = true;
 
 					view.ChangeMode(Mode::Edit);
@@ -149,16 +159,19 @@ int main(int argc, char* argv[]) {
 					break;
 				}
 				case 'u': {
+					if (view.mode == Mode::Visual) break;
 					nose = true;
 					cmdMan.undo();
 					break;
 				}
 				case 'U': {
+					if (view.mode == Mode::Visual) break;
 					nose = true;
 					cmdMan.redo();
 					break;
 				}
 				case 'x': {
+					if (view.mode == Mode::Visual) break;
 					nose = true;
 					cmdMan.executeCommand(std::make_unique<RemoveTextCommand>(
 						pt, view.GetCurrentPos(), 1, view
@@ -169,6 +182,7 @@ int main(int argc, char* argv[]) {
 					char c = GetKey();
 					switch (c) {
 					case 'd': {
+						if (view.mode == Mode::Visual) break;
 						view.GoAllLeft();
 						cmdMan.executeCommand(std::make_unique<RemoveLineCommand>(
 							pt, view.GetCurrentPos(), view
@@ -183,6 +197,7 @@ int main(int argc, char* argv[]) {
 						break;
 					}
 					case 'w': {
+						if (view.mode == Mode::Visual) break;
 						int lineN = view.GetCurrentLine() - 1;
 						auto line = lines[lineN];
 						int x = view.GetCurrentX() - 10;
@@ -228,7 +243,7 @@ int main(int argc, char* argv[]) {
 				char c = GetKey();
 				switch (c) {
 				case 27: // esc
-					view.ChangeMode(Mode::Visual);
+					view.ChangeMode(Mode::Normal);
 					view.Render();
 					break;
 				case 13: { // enter

@@ -63,3 +63,19 @@ void ClearScreen() {
 	std::system("clear");
 #endif
 }
+
+char GetCharAt(int x, int y) {
+#ifdef _WIN32
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	CHAR ch;
+	DWORD read;
+
+	COORD pos = { (SHORT)x, (SHORT)y };
+	ReadConsoleOutputCharacterA(hConsole, &ch, 1, pos, &read);
+
+	return ch;
+#else
+	char ch = mvinch(y, x) & A_CHARTEXT;
+#endif
+}
+

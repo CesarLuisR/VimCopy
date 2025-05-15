@@ -2,9 +2,10 @@
 
 #include <vector>
 #include "ConsoleUtils.h"
+#include "SelectedText.h"
 
 enum class Mode {
-	Visual, Edit
+	Normal, Edit, Visual
 };
 
 class WindowsView {
@@ -14,13 +15,14 @@ private:
 	int currentY;
 	int maxX;
 	int startPoint;
+	SelectedText selText;
 	std::vector<std::string>& lines;
 
 public:
 	ConsoleSize cSize;
 	Mode mode;
 
-	WindowsView(std::vector<std::string>& lines);
+	WindowsView(std::vector<std::string>& lines, SelectedText selText);
 	void IncreaseCurrentLine();
 	void DecreaseCurrentLine();
 	void UpdateLines(std::vector<std::string>& lines);
@@ -44,4 +46,6 @@ public:
 	void SetCurrentStart(int);
 	unsigned long int GetCurrentPos() const;
 	void Render();
+	void HighlightOne();
+	void RenderHighlight();
 };

@@ -1,15 +1,18 @@
 #include "WindowView.h"
 #include <iomanip>
 
+#include "SelectedText.h"
+
 // WindowsView: renders text lines in a console with line numbers and cursor navigation.
-WindowsView::WindowsView(std::vector<std::string>& _lines)
+WindowsView::WindowsView(std::vector<std::string>& _lines, SelectedText selText)
     : currentLine(1),    // 1-based index of the cursor line
     currentX(10),      // X position of the cursor (column)
     currentY(0),       // Y position of the cursor (row)
     maxX(10),
     startPoint(0),     // Index of first visible line in 'lines'
-	mode(Mode::Visual),
-    lines(_lines)      // Reference to the text buffer
+	mode(Mode::Normal),
+    lines(_lines),      // Reference to the text buffer
+    selText(selText)
 {}
 
 // Render the current view: clear screen, draw line numbers and content
@@ -38,7 +41,7 @@ void WindowsView::Render() {
     GoTo(0, cSize.height - 1);
 	std::cout << std::string(cSize.width, ' ');
     GoTo(0, cSize.height - 1);
-    std::cout << (mode == Mode::Visual ? "Visual Mode" : "Edit Mode");
+    std::cout << (mode == Mode::Normal ? "Normal Mode" : "Edit Mode");
 
     GoTo(currentX, currentY);
     std::cout << "\033[?25h";  // Show cursor
@@ -141,7 +144,7 @@ void WindowsView::GoAllLeft() {
 }
 
 void WindowsView::ChangeMode(const Mode _mode) {
-    if (_mode == Mode::Visual)
+    if (_mode == Mode::Normal)
         std::cout << "\033[1 q"; 
     else std::cout << "\033[6 q";
     mode = _mode;
@@ -213,19 +216,73 @@ unsigned long int WindowsView::GetCurrentPos() const {
     return currentPos;
 }
 
+void WindowsView::RenderHighlight() {
+    int firstLineVisible = GetCurrentStart() + 1;
+    auto selLines = selText.GetLines();
+
+    for (SelectedLine line : selLines) {
+        for (SelectedPos pos : line.positions) {
+            if (firstLineVisible > pos.currentLine) continue;
+
+            int relativeY = pos.currentLine - firstLineVisible;
+
+            char c = GetCharAt(pos.currentX, relativeY);
+            GoTo(pos.currentX, relativeY);
+            std::cout << "\033[7m" << c << "\033[0m";
+        }
+    }
+
+    GoTo(GetCurrentX(), GetCurrentY());
+}
+
+void WindowsView::HighlightOne() {
+	char c = GetCharAt(currentX, currentY);
+	GoTo(GetCurrentX(), GetCurrentY());
+	std::cout << "\033[7m" << c << "\033[0m";
+}
+
 void WindowsView::VisualCommands(char c) {
     switch (c) {
-    case 'j': // Down
+    case 'j': { // Down
+        if (mode == Mode::Visual) {
+            while (GoRight())
+            {
+        		selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
+        		RenderHighlight();
+            }
+        }
         IncreaseCurrentLine();
+        if (mode == Mode::Visual) {
+            selText.AddLine({ currentLine, currentX, currentX, {} });
+            currentX = selText.GetFirstPosX();
+            maxX = currentX;
+            GoTo(currentX, currentY);
+        }
         break;
+    }
     case 'k': // Up
         DecreaseCurrentLine();
+        if (mode == Mode::Visual) {
+            selText.RemoveLine();
+            RenderHighlight();
+            maxX = selText.GetFirstPosX();
+        }
         break;
     case 'l':
         GoRight();
+        if (mode == Mode::Visual) {
+            selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
+            maxX = selText.GetFirstPosX();
+            RenderHighlight();
+        }
         break;
     case 'h':
         GoLeft();
+        if (mode == Mode::Visual) {
+            selText.RemovePos();
+            maxX = selText.GetFirstPosX();
+            RenderHighlight();
+        }
         break;
     case 'i': {
         ChangeMode(Mode::Edit);
@@ -239,6 +296,7 @@ void WindowsView::VisualCommands(char c) {
         break;
     }
     case ':': {
+        if (mode == Mode::Visual) break;
         char c = GetKey();
         if (c == 'q') {
             GoTo(0, 0);
@@ -334,7 +392,27 @@ void WindowsView::VisualCommands(char c) {
         }
         break;
     }
+    case 'v': {
+        if (mode == Mode::Visual) break;
+        ChangeMode(Mode::Visual);
+        selText.AddLine({ currentLine, currentX, currentX, {} });selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
+    		RenderHighlight();
+        break;
+    }
+    case 'V': {
+        if (mode == Mode::Visual) break;
+        ChangeMode(Mode::Visual);
+        break;
+    }
+    case 27: { // esc
+        if (mode != Mode::Visual) break;
+        ChangeMode(Mode::Normal);
+        selText.Clear();
+            Render();
+        break;
+    }
     default:
         break;
     }
 }
+

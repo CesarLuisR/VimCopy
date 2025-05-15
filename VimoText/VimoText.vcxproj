@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="Command.cpp" />
     <ClCompile Include="ConsoleUtils.cpp" />
+    <ClCompile Include="SelectedText.cpp" />
     <ClCompile Include="Testing.cpp" />
     <ClCompile Include="PieceTable.cpp" />
     <ClCompile Include="Utils.cpp" />
@@ -139,6 +140,7 @@
     <ClInclude Include="Command.h" />
     <ClInclude Include="ConsoleUtils.h" />
     <ClInclude Include="PieceTable.h" />
+    <ClInclude Include="SelectedText.h" />
     <ClInclude Include="Testing.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="WindowView.h" />
