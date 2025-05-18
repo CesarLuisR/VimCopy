@@ -1,8 +1,6 @@
 #include "WindowView.h"
 #include <iomanip>
 
-#include "SelectedText.h"
-
 // WindowsView: renders text lines in a console with line numbers and cursor navigation.
 WindowsView::WindowsView(std::vector<std::string>& _lines, SelectedText selText)
     : currentLine(1),    // 1-based index of the cursor line
@@ -20,22 +18,45 @@ void WindowsView::Render() {
     std::cout << "\033[?25l";  // Hide cursor
     cSize = GetConsoleSize();  // Update console dimensions
 
+	int firstLineVisible = startPoint + 1;
+	auto selLines = selText.GetLines();
+
     // Draw each visible line (excluding bottom status row)
     for (int i = 0; i < cSize.height - 1; i++) {
         int idx = startPoint + i;
         if (idx >= lines.size())
             break;  // No more lines to display
 
-        // Gutter: right-aligned line number + vertical bar
+        // Clear the line
         GoTo(0, i);
         std::cout << std::string(cSize.width, ' ');
+
+        // Gutter: right-aligned line number + vertical bar
         GoTo(0, i);
         std::cout << std::setw(6) << std::right << (idx + 1)
             << " " << char(179);
 
         // Text content starts at column 10
         GoTo(10, i);
-        std::cout << lines[idx];
+
+        if (mode == Mode::Visual) {
+            auto selLines = selText.GetLines();
+            if (selLines[idx].completed) {
+				std::cout << "\033[7m" << lines[idx] << "\033[0m";
+            }
+            else {
+				std::cout << lines[idx];
+
+                for (SelectedPos pos : selLines[idx].positions) {
+					char c = GetCharAt(pos.currentX, i);
+					GoTo(pos.currentX, i);
+					std::cout << "\033[7m" << c << "\033[0m";
+                }
+            }
+        }
+        else {
+			std::cout << lines[idx];
+        }
     }
 
     GoTo(0, cSize.height - 1);
@@ -45,49 +66,56 @@ void WindowsView::Render() {
 
     GoTo(currentX, currentY);
 
-    if (mode == Mode::Visual) RenderHighlight();
     std::cout << "\033[?25h";  // Show cursor
 }
 
 // Move cursor down by one line; scroll view if needed
-void WindowsView::IncreaseCurrentLine() {
+bool WindowsView::IncreaseCurrentLine() {
     // Case A: at end of buffer window but not beyond last line
     if (startPoint + cSize.height - 1 == lines.size() &&
         currentLine + 1 <= lines.size()) {
         ++currentLine;
 		XReAdjustment();
         GoTo(currentX, ++currentY);
+        return true;
     }
     // Case B: space to move cursor down without scrolling
     else if (currentY < cSize.height - 5) {
         if (currentLine == lines.size())
-            return;  // Already at last line
+            return false;  // Already at last line
         ++currentLine;
 		XReAdjustment();
         GoTo(currentX, ++currentY);
+        return true;
     }
     // Case C: scroll down one line and re-render
     else if (startPoint + cSize.height <= lines.size()) {
         ++currentLine;
         ++startPoint;
 		XReAdjustment();
-        Render();
+        if (mode != Mode::Visual)
+			Render();
+        return true;
     }
+
+    return false;
 }
 
 // Move cursor up by one line; scroll view if needed
-void WindowsView::DecreaseCurrentLine() {
+bool WindowsView::DecreaseCurrentLine() {
     // Case A: at top of view but not first line
     if (startPoint == 0 && currentLine > 1) {
         --currentLine;
 		XReAdjustment();
         GoTo(currentX, --currentY);
+        return true;
     }
     // Case B: space to move cursor up without scrolling
     else if (currentY > 5) {
         --currentLine;
 		XReAdjustment();
         GoTo(currentX, --currentY);
+        return true;
     }
     // Case C: scroll up one line and re-render
     else if (startPoint > 0) {
@@ -95,7 +123,10 @@ void WindowsView::DecreaseCurrentLine() {
         --startPoint;
 		XReAdjustment();
         Render();
+        return true;
     }
+
+    return false;
 }
 
 void WindowsView::XReAdjustment() {
@@ -201,7 +232,6 @@ void WindowsView::SetCurrentY(int y) {
     GoTo(currentX, currentY);
 }
 
-
 void WindowsView::UpdateLines(std::vector<std::string>& _lines) {
     lines = _lines;
 }
@@ -218,75 +248,128 @@ unsigned long int WindowsView::GetCurrentPos() const {
     return currentPos;
 }
 
-void WindowsView::RenderHighlight() {
-    int firstLineVisible = GetCurrentStart() + 1;
-    auto selLines = selText.GetLines();
-
-    for (SelectedLine line : selLines) {
-        for (SelectedPos pos : line.positions) {
-            if (firstLineVisible > pos.currentLine) continue;
-
-            int relativeY = pos.currentLine - firstLineVisible;
-
-            char c = GetCharAt(pos.currentX, relativeY);
-            GoTo(pos.currentX, relativeY);
-            std::cout << "\033[7m" << c << "\033[0m";
-        }
-    }
-
-    GoTo(GetCurrentX(), GetCurrentY());
-}
-
 void WindowsView::HighlightOne() {
 	char c = GetCharAt(currentX, currentY);
 	GoTo(GetCurrentX(), GetCurrentY());
 	std::cout << "\033[7m" << c << "\033[0m";
 }
 
+void WindowsView::RemoveHighlight() {
+	char c = GetCharAt(currentX, currentY);
+	GoTo(GetCurrentX(), GetCurrentY());
+	std::cout << c;
+}
+
 void WindowsView::VisualCommands(char c) {
+	auto selLines = selText.GetLines();
     switch (c) {
     case 'j': { // Down
         if (mode == Mode::Visual) {
-            while (GoRight())
-        		selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
+            if (selLines[currentLine + 1].currentLine > selText.GetFirstPosX().currentLine) {
+                if (currentLine == 1 || selLines[currentLine - 2].startPos == -1) {
+                    int tempX = currentX;
+                    int tempMax = maxX;
 
-        	//RenderHighlight();
+                    selText.AddLine({ currentLine, currentX, currentX, false, {} });
+
+                    do selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
+                    while (GoRight());
+
+                    currentX = tempX;
+                    maxX = tempMax;
+                    GoTo(currentX, currentY);
+                }
+                else {
+                    selText.AddLine({ currentLine, currentX, currentX, true, {} });
+                }
+            }
+            else {
+                int temX = currentX;
+                int tempMax = maxX;
+
+                selText.RemoveLine({ currentLine, currentX, currentX, false, {} });
+	            
+            }
         }
-        IncreaseCurrentLine();
+        if (!IncreaseCurrentLine()) break;
+
         if (mode == Mode::Visual) {
-            selText.AddLine({ currentLine, currentX, currentX, {} });
-            currentX = selText.GetFirstPosX();
-            maxX = currentX;
-            GoTo(currentX, currentY);
+            if (selLines[currentLine].currentLine >= selText.GetFirstPosX().currentLine) {
+                selText.AddLine({ currentLine, currentX, currentX, false, {} });
+
+                int tempX = currentX;
+                int tempMax = maxX;
+
+                do selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
+                while (GoLeft());
+
+                currentX = tempX;
+                maxX = tempMax;
+
+                GoTo(currentX, currentY);
+
+                Render();
+            } else {
+                int tempX = currentX;
+                int tempMax = maxX;
+
+                do selText.RemovePos({ currentLine, currentX, currentY, 0 });
+            	while (GoLeft());
+
+                currentX = tempX;
+                maxX = tempMax;
+
+                GoTo(currentX, currentY);
+
+                Render();
+            }
         }
         break;
     }
-    case 'k': // Up
-        DecreaseCurrentLine();
+    case 'k': { // Up 
+    //    if (mode == Mode::Visual) {
+    //        // if the last line or the next line
+    //        if (currentLine - 1 == lines.size() || selLines[currentLine].startPos == -1) {
+
+    //        }
+    //    	else {
+    //        }
+
+    //        if (selText.GetFirstPosX().currentLine != currentLine - 1)
+				//selText.RemoveLine({ currentLine, -1, -1, false, {} });
+    //    }
+        if (!DecreaseCurrentLine()) break;
+        //if (mode == Mode::Visual) {
+        //	Render();
+        //}
+        break;
+    }
+    case 'l': { // right
+        if (currentX < selLines[currentLine - 1].startPos) {
+        	selText.RemovePos({ currentLine, currentX, currentY, GetCurrentPos() });
+        	RemoveHighlight();
+        }
+        if (!GoRight()) break;
         if (mode == Mode::Visual) {
-            selText.RemoveLine();
-            //RenderHighlight();
-            maxX = selText.GetFirstPosX();
+        	selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
+        	HighlightOne();
         }
         break;
-    case 'l':
-        GoRight();
+    }
+    case 'h': { // left
+        if (mode == Mode::Visual && currentX != 10) {
+            if (currentX > selLines[currentLine - 1].startPos) {
+				selText.RemovePos({ currentLine, currentX, currentY, GetCurrentPos() });
+				RemoveHighlight();
+            }
+        }
+        if (!GoLeft()) break;
         if (mode == Mode::Visual) {
-            selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
-            maxX = selText.GetFirstPosX();
-            //RenderHighlight();
+        	selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
             HighlightOne();
         }
         break;
-    case 'h':
-        GoLeft();
-        if (mode == Mode::Visual) {
-            selText.RemovePos();
-            maxX = selText.GetFirstPosX();
-            //RenderHighlight();
-            HighlightOne();
-        }
-        break;
+    }
     case 'i': {
         ChangeMode(Mode::Edit);
         Render();
@@ -306,6 +389,10 @@ void WindowsView::VisualCommands(char c) {
             ClearScreen();
             exit(0);
         }
+
+    		if (c == 'w') {
+                // Guardar el archivo
+            }
         break;
     }
     case 'g': {
@@ -398,7 +485,9 @@ void WindowsView::VisualCommands(char c) {
     case 'v': {
         if (mode == Mode::Visual) break;
         ChangeMode(Mode::Visual);
-        selText.AddLine({ currentLine, currentX, currentX, {} });selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
+        selText.AddLine({ currentLine, currentX, currentX, false, {} });
+    		selText.AddPos({ currentLine, currentX, currentY, GetCurrentPos() });
+            selText.AddFirstPos(currentLine);
         Render();
         break;
     }
@@ -418,4 +507,3 @@ void WindowsView::VisualCommands(char c) {
         break;
     }
 }
-

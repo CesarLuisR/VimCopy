@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 
-
 struct SelectedPos {
 	int currentLine;
 	int currentX;
@@ -13,21 +12,28 @@ struct SelectedLine {
 	int currentLine;
 	int startPos;
 	int endPos;
+	bool completed;
 	std::vector<SelectedPos> positions;
 };
 
 class SelectedText {
 private:
 	std::vector<SelectedLine> lines;
-	int count;
+	int selectedCount;
+	int firstPosLine;
 
 public:
-	SelectedText();
+
+	SelectedText(int linesCount);
+	void UpdateLines(int linesCount);
 	std::vector<SelectedLine> GetLines();
 	void AddLine(SelectedLine line);
-	void RemoveLine();
+	void RemoveLine(SelectedLine line);
 	void AddPos(SelectedPos pos);
-	void RemovePos();
+	void RemovePos(SelectedPos pos);
 	void Clear();
-	int GetFirstPosX();
+	void AddFirstPos(int);
+	SelectedPos GetFirstPosX();
+	SelectedPos GetLastPosX();
 };
+

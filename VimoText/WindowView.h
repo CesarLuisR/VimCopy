@@ -23,8 +23,8 @@ public:
 	Mode mode;
 
 	WindowsView(std::vector<std::string>& lines, SelectedText selText);
-	void IncreaseCurrentLine();
-	void DecreaseCurrentLine();
+	bool IncreaseCurrentLine();
+	bool DecreaseCurrentLine();
 	void UpdateLines(std::vector<std::string>& lines);
 	const std::vector<std::string>& GetLines();
 	bool GoRight();
@@ -48,4 +48,5 @@ public:
 	void Render();
 	void HighlightOne();
 	void RenderHighlight();
+	void RemoveHighlight();
 };

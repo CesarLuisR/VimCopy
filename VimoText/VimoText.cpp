@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
 	PieceTable pt(text);
 	CommandManager cmdMan;
 	auto lines = GetLines(pt.GetText());
-	SelectedText selectedText;
+	SelectedText selectedText(lines.size());
 	WindowsView view(lines, selectedText);
 
 	// Changing the cursor style to visual mode
@@ -50,6 +50,7 @@ int main(int argc, char* argv[]) {
 	while (true) {
 		lines = GetLines(pt.GetText());
 		view.UpdateLines(lines);
+		selectedText.UpdateLines(lines.size());
 
 		view.Render();
 

@@ -1,49 +1,83 @@
 #include "SelectedText.h"
 #include "WindowView.h"
 
-SelectedText::SelectedText() {
-	count = 0;
+SelectedText::SelectedText(int linesCount) {
+	selectedCount = 0;
+
+	lines.reserve(linesCount);
+	for (int i = 0; i < linesCount; i++) {
+		SelectedLine emptyLine = { i, -1, -1, false, {} };
+		lines.emplace_back(emptyLine);
+	}
 }
 
 std::vector<SelectedLine> SelectedText::GetLines() {
 	return lines;
 }
 
-void SelectedText::AddLine(SelectedLine line) {
-	lines.emplace_back(line);
+void SelectedText::UpdateLines(int linesCount) {
+	lines.clear();
+	lines.reserve(linesCount);
+	for (int i = 0; i < linesCount; i++) {
+		SelectedLine emptyLine = { i, -1, -1, false, {} };
+		lines.emplace_back(emptyLine);
+	}
 }
 
-void SelectedText::RemoveLine() {
-	if (count == 0) return;
+void SelectedText::AddLine(SelectedLine line) {
+	lines[line.currentLine - 1] = line;
+	lines[line.currentLine - 1].currentLine -= 1;
+}
 
-	count -= lines.back().positions.size();
-	if (lines.empty()) return;
-	lines.pop_back();
+void SelectedText::RemoveLine(SelectedLine line) {
+	if (selectedCount == 0) return;
+
+	selectedCount -= lines.back().positions.size();
+	SelectedLine emptyLine = { line.currentLine - 1, 0, 0, false, {} };
+	lines[line.currentLine - 1] = emptyLine;
 }
 
 void SelectedText::AddPos(SelectedPos pos) {
-	lines.back().positions.emplace_back(pos);
-	lines.back().endPos++;
-	count++;
+	lines[pos.currentLine - 1].positions.emplace_back(pos);
+	lines[pos.currentLine - 1].endPos++;
+	selectedCount++;
 }
 
-void SelectedText::RemovePos() {
-	if (count == 0) return;
+void SelectedText::RemovePos(SelectedPos pos) {
+	if (selectedCount == 0) return;
 
-	if (lines.empty()) return;
-	if (lines.back().positions.empty()) return;
-	
-	lines.back().positions.pop_back();
-	lines.back().endPos--;
+	lines[pos.currentLine - 1].positions.pop_back();
+	lines[pos.currentLine - 1].endPos--;
 
-	count--;
+	selectedCount--;
 }
 
 void SelectedText::Clear() {
-	lines.clear();
+	for (int i = 0; i < lines.size(); i++) {
+		SelectedLine emptyLine = { i, -1, -1, false, {} };
+		lines[i] = emptyLine;
+	}
 }
 
-int SelectedText::GetFirstPosX() {
-	return lines.begin()->startPos;
+void SelectedText::AddFirstPos(int line) {
+	firstPosLine = line - 1;
 }
+
+
+SelectedPos SelectedText::GetFirstPosX() {
+	return lines[firstPosLine].positions[0];
+}
+
+SelectedPos SelectedText::GetLastPosX() {
+	SelectedPos lastPos;
+
+	for (SelectedLine line : lines) {
+		if (line.startPos != -1) {
+			lastPos = line.positions.back();
+		}
+	}
+	
+	return lastPos;
+}
+
 
