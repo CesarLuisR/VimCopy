@@ -2,6 +2,7 @@
 #include <streambuf>
 #include <string>
 #include <vector>
+#include "Windows.h"
 
 class TabExpanderBuf : public std::streambuf {
 public:
@@ -19,3 +20,5 @@ private:
 
 std::vector<std::string> GetLines(const std::string& text);
 int CountPosTillNext(const std::string& line, int x, char c);
+void CopyIntoClipboard(std::string&);
+std::string PasteFromClipboard();

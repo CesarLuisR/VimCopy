@@ -21,9 +21,9 @@ private:
 	std::vector<SelectedLine> lines;
 	int selectedCount;
 	int firstPosLine;
+	int scrollStartPos;
 
 public:
-
 	SelectedText(int linesCount);
 	void UpdateLines(int linesCount);
 	std::vector<SelectedLine> GetLines();
@@ -33,6 +33,8 @@ public:
 	void RemovePos(SelectedPos pos);
 	void Clear();
 	void AddFirstPos(int);
+	void AddScrollPos(int);
+	int GetScrollPos();
 	SelectedPos GetFirstPosX();
 	SelectedPos GetLastPosX();
 };

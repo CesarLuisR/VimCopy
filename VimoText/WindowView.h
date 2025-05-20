@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "ConsoleUtils.h"
+#include "PieceTable.h"
 #include "SelectedText.h"
 
 enum class Mode {
@@ -15,14 +16,16 @@ private:
 	int currentY;
 	int maxX;
 	int startPoint;
-	SelectedText selText;
+	SelectedText& selText;
 	std::vector<std::string>& lines;
+	PieceTable& pt;
+	std::ofstream& file;
 
 public:
 	ConsoleSize cSize;
 	Mode mode;
 
-	WindowsView(std::vector<std::string>& lines, SelectedText selText);
+	WindowsView(std::vector<std::string>& lines, SelectedText& selText, PieceTable& pt, std::ofstream& file);
 	bool IncreaseCurrentLine();
 	bool DecreaseCurrentLine();
 	void UpdateLines(std::vector<std::string>& lines);
@@ -47,6 +50,5 @@ public:
 	unsigned long int GetCurrentPos() const;
 	void Render();
 	void HighlightOne();
-	void RenderHighlight();
 	void RemoveHighlight();
 };

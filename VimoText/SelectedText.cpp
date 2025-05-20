@@ -30,22 +30,22 @@ void SelectedText::AddLine(SelectedLine line) {
 }
 
 void SelectedText::RemoveLine(SelectedLine line) {
-	if (selectedCount == 0) return;
+	//if (selectedCount == 0) return;
 
 	selectedCount -= lines.back().positions.size();
-	SelectedLine emptyLine = { line.currentLine - 1, 0, 0, false, {} };
+	SelectedLine emptyLine = { line.currentLine - 1, -1, -1, false, {} };
 	lines[line.currentLine - 1] = emptyLine;
 }
 
 void SelectedText::AddPos(SelectedPos pos) {
 	lines[pos.currentLine - 1].positions.emplace_back(pos);
 	lines[pos.currentLine - 1].endPos++;
-	selectedCount++;
+	//selectedCount++;
 }
 
 void SelectedText::RemovePos(SelectedPos pos) {
-	if (selectedCount == 0) return;
-
+	//if (selectedCount == 0) return;
+	lines[pos.currentLine - 1].completed = false;
 	lines[pos.currentLine - 1].positions.pop_back();
 	lines[pos.currentLine - 1].endPos--;
 
@@ -63,6 +63,13 @@ void SelectedText::AddFirstPos(int line) {
 	firstPosLine = line - 1;
 }
 
+void SelectedText::AddScrollPos(int scrollPos) {
+	scrollStartPos = scrollPos;
+}
+
+int SelectedText::GetScrollPos() {
+	return scrollStartPos;
+}
 
 SelectedPos SelectedText::GetFirstPosX() {
 	return lines[firstPosLine].positions[0];

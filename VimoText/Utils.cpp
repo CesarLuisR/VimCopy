@@ -50,3 +50,44 @@ int CountPosTillNext(const std::string& line, int x, char c) {
     if (pos == std::string::npos) return -1; 
     return static_cast<int>(pos - x);
 }
+
+void CopyIntoClipboard(std::string& text) {
+	if (!OpenClipboard(nullptr)) return;
+
+	EmptyClipboard();
+
+	HGLOBAL hGlobal = GlobalAlloc(GMEM_MOVEABLE, text.size() + 1);
+	if (!hGlobal) {
+		CloseClipboard();
+		return;
+	}
+
+	memcpy(GlobalLock(hGlobal), text.c_str(), text.size() + 1);
+	GlobalUnlock(hGlobal);
+
+	SetClipboardData(CF_TEXT, hGlobal);
+
+	CloseClipboard();
+}
+
+std::string PasteFromClipboard() {
+	if (!OpenClipboard(nullptr)) return "";
+
+	HANDLE hData = GetClipboardData(CF_TEXT);  
+	if (hData == nullptr) {
+		CloseClipboard();
+		return "";
+	}
+
+	char* pszText = static_cast<char*>(GlobalLock(hData));
+	if (pszText == nullptr) {
+		CloseClipboard();
+		return "";
+	}
+
+	std::string text(pszText);  
+	GlobalUnlock(hData);
+	CloseClipboard();
+
+	return text;
+}

@@ -1,7 +1,7 @@
 ﻿#include "Command.h"
+#include "fstream"
 #include "ConsoleUtils.h"
 #include "PieceTable.h"
-#include "fstream"
 #include "SelectedText.h"
 #include "thread"
 #include "Testing.h"
@@ -9,14 +9,20 @@
 #include "Utils.h"
 
 int main(int argc, char* argv[]) {
-	//if (argc < 2) {
-	//	std::cerr << "Usage: " << argv[0] << " <filename>\n";
-	//	return 1;
-	//}
+	if (argc < 2) {
+		std::cerr << "Usage: " << argv[0] << " <filename>\n";
+		return 1;
+	}
 
-	//std::ifstream file(argv[1]);
-	std::ifstream file("./PieceTable.cpp");
+	std::ifstream file(argv[1]);
 	if (!file.is_open()) {
+		std::cerr << "No se pudo abrir el archivo\n";
+		return 1;
+	}
+
+	std::string filePath = std::string(argv[1]);
+	std::ofstream outFile(filePath);
+	if (!outFile.is_open()) {
 		std::cerr << "No se pudo abrir el archivo\n";
 		return 1;
 	}
@@ -39,9 +45,9 @@ int main(int argc, char* argv[]) {
 	CommandManager cmdMan;
 	auto lines = GetLines(pt.GetText());
 	SelectedText selectedText(lines.size());
-	WindowsView view(lines, selectedText);
+	WindowsView view(lines, selectedText, pt, outFile);
 
-	// Changing the cursor style to visual mode
+	// Changing the cursor style to normal mode
 	std::cout << "\033[1 q";
 
 	// Visual mode thread
@@ -62,6 +68,36 @@ int main(int argc, char* argv[]) {
 			if (view.mode == Mode::Normal || view.mode == Mode::Visual) {
 				char c = GetKey();
 				switch (c) {
+				case 'y': {
+					if (view.mode == Mode::Visual) {
+						int selectedFirstPos = selectedText.GetFirstPosX().curPos;
+						int currentPos = view.GetCurrentPos();
+
+						std::string text;
+						if (selectedFirstPos < currentPos) {
+							int length = view.GetCurrentPos() - selectedFirstPos + 1;
+							text = pt.GetText(selectedFirstPos, length);
+						} else {
+							int length = (selectedFirstPos + 1) - view.GetCurrentPos();
+							text = pt.GetText(currentPos, length);
+						}
+						CopyIntoClipboard(text);
+
+						view.mode = Mode::Normal;
+						nose = true;
+					}
+
+					break;
+				}
+				case 'p': {
+					std::string clipboardText = PasteFromClipboard();
+
+					cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
+						pt, view.GetCurrentPos(), clipboardText, view
+					));
+					nose = true;
+					break;
+				}
 				case 'O': {
 					if (view.mode == Mode::Visual) break;
 					nose = true;
@@ -180,6 +216,45 @@ int main(int argc, char* argv[]) {
 					break;
 				}
 				case 'd': {
+					if (view.mode == Mode::Visual) {
+						int selectedFirstPos = selectedText.GetFirstPosX().curPos;
+						int currentPos = view.GetCurrentPos();
+
+						int tempX = selectedText.GetFirstPosX().currentX;
+						int tempY = selectedText.GetFirstPosX().currentY;
+						int tempLine = selectedText.GetFirstPosX().currentLine;
+
+						if (selectedFirstPos < currentPos) {
+							int length = currentPos - selectedFirstPos;
+
+							std::string text = pt.GetText(selectedFirstPos, length);
+							CopyIntoClipboard(text);
+
+							cmdMan.executeCommand(std::make_unique<RemoveTextCommand>(
+								pt, selectedFirstPos, length + 1, view
+							));
+
+							view.SetCurrentLine(tempLine);
+							view.SetCurrentX(tempX);
+							view.SetCurrentY(tempY);
+							view.SetCurrentStart(selectedText.GetScrollPos());
+						} else {
+							int length = selectedFirstPos - currentPos;
+
+							std::string text = pt.GetText(currentPos, length);
+							CopyIntoClipboard(text);
+
+							cmdMan.executeCommand(std::make_unique<RemoveTextCommand>(
+								pt, currentPos, length + 1, view
+							));
+						}
+
+						view.mode = Mode::Normal;
+
+						nose = true;
+						break;
+					}
+
 					char c = GetKey();
 					switch (c) {
 					case 'd': {
@@ -342,6 +417,7 @@ int main(int argc, char* argv[]) {
 					cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
 						pt, view.GetCurrentPos(), std::string(1, c), view
 					));
+					view.GoRight();
 					break;
 				}
 			}

@@ -20,7 +20,8 @@ void InsertTextCommand::execute() {
         _view.IncreaseCurrentLine();
         _view.GoAllLeft();
     } else {
-        _view.SetCurrentX(_view.GetCurrentX() + 1);
+        // Esto me esta dando un problema
+        _view.SetCurrentX(_view.GetCurrentX());
 		_view.SetCurrentY(_formerY);
 		_view.SetCurrentLine(_formerLine);
 		_view.SetCurrentStart(_formerStart);
@@ -75,6 +76,7 @@ void RemoveLineCommand::execute() {
     int lineSize = lines[line].size();
 
 	backup_text = _pt.GetText(_index, lineSize);
+    CopyIntoClipboard(backup_text);
 	_pt.RemoveText(_index, lineSize);
 
     _view.SetCurrentX(_formerX);
