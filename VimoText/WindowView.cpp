@@ -481,6 +481,12 @@ void WindowsView::VisualCommands(char c) {
     case ':': {
         if (mode == Mode::Visual) break;
         char c = GetKey();
+        if (c == 'w') {
+            std::string fileText = pt.GetText();
+            file << fileText;
+            break;
+        }
+
         if (c == 'q') {
             GoTo(0, 0);
             ClearScreen();
@@ -488,10 +494,6 @@ void WindowsView::VisualCommands(char c) {
             exit(0);
         }
 
-        if (c == 'w') {
-            std::string fileText = pt.GetText();
-            file << fileText;
-        }
         break;
     }
     case 'g': {
