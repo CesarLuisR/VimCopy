@@ -19,7 +19,6 @@ struct SelectedLine {
 class SelectedText {
 private:
 	std::vector<SelectedLine> lines;
-	int selectedCount;
 	int firstPosLine;
 	int scrollStartPos;
 
@@ -36,6 +35,5 @@ public:
 	void AddScrollPos(int);
 	int GetScrollPos();
 	SelectedPos GetFirstPosX();
-	SelectedPos GetLastPosX();
 };
 

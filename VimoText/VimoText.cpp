@@ -21,11 +21,6 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::string filePath = std::string(argv[1]);
-	std::ofstream outFile(filePath);
-	if (!outFile.is_open()) {
-		std::cerr << "No se pudo abrir el archivo\n";
-		return 1;
-	}
 
 	const int TAB_SPACES = 4;
 	std::string text;
@@ -45,7 +40,7 @@ int main(int argc, char* argv[]) {
 	CommandManager cmdMan;
 	auto lines = GetLines(pt.GetText());
 	SelectedText selectedText(lines.size());
-	WindowsView view(lines, selectedText, pt, outFile);
+	WindowsView view(lines, selectedText, pt, filePath);
 
 	// Changing the cursor style to normal mode
 	std::cout << "\033[1 q";
@@ -417,7 +412,7 @@ int main(int argc, char* argv[]) {
 					cmdMan.executeCommand(std::make_unique<InsertTextCommand>(
 						pt, view.GetCurrentPos(), std::string(1, c), view
 					));
-					view.GoRight();
+					view.SetCurrentX(view.GetCurrentX() + 1);
 					break;
 				}
 			}

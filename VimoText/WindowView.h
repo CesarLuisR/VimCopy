@@ -19,13 +19,13 @@ private:
 	SelectedText& selText;
 	std::vector<std::string>& lines;
 	PieceTable& pt;
-	std::ofstream& file;
+	std::string& filePath;
 
 public:
 	ConsoleSize cSize;
 	Mode mode;
 
-	WindowsView(std::vector<std::string>& lines, SelectedText& selText, PieceTable& pt, std::ofstream& file);
+	WindowsView(std::vector<std::string>& lines, SelectedText& selText, PieceTable& pt, std::string& filePath);
 	bool IncreaseCurrentLine();
 	bool DecreaseCurrentLine();
 	void UpdateLines(std::vector<std::string>& lines);

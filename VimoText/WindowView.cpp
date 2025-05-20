@@ -4,7 +4,7 @@
 #include <iomanip>
 
 // WindowsView: renders text lines in a console with line numbers and cursor navigation.
-WindowsView::WindowsView(std::vector<std::string>& _lines, SelectedText& selText, PieceTable& pt, std::ofstream& file)
+WindowsView::WindowsView(std::vector<std::string>& _lines, SelectedText& selText, PieceTable& pt, std::string& filePath) 
     : currentLine(1),    // 1-based index of the cursor line
     currentX(10),      // X position of the cursor (column)
     currentY(0),       // Y position of the cursor (row)
@@ -14,7 +14,7 @@ WindowsView::WindowsView(std::vector<std::string>& _lines, SelectedText& selText
     lines(_lines),      // Reference to the text buffer
     selText(selText),
 	pt(pt),
-	file(file)
+	filePath(filePath)
 {}
 
 // Render the current view: clear screen, draw line numbers and content
@@ -483,14 +483,19 @@ void WindowsView::VisualCommands(char c) {
         char c = GetKey();
         if (c == 'w') {
             std::string fileText = pt.GetText();
-            file << fileText;
+            std::ofstream outFile(filePath);
+        	if (!outFile.is_open()) {
+        		break;
+        	}
+            outFile << fileText;
+
             break;
         }
 
         if (c == 'q') {
             GoTo(0, 0);
             ClearScreen();
-            file.close();
+            //file.close();
             exit(0);
         }
 

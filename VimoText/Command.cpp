@@ -20,7 +20,6 @@ void InsertTextCommand::execute() {
         _view.IncreaseCurrentLine();
         _view.GoAllLeft();
     } else {
-        // Esto me esta dando un problema
         _view.SetCurrentX(_view.GetCurrentX());
 		_view.SetCurrentY(_formerY);
 		_view.SetCurrentLine(_formerLine);

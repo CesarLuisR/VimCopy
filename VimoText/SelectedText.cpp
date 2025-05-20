@@ -2,8 +2,6 @@
 #include "WindowView.h"
 
 SelectedText::SelectedText(int linesCount) {
-	selectedCount = 0;
-
 	lines.reserve(linesCount);
 	for (int i = 0; i < linesCount; i++) {
 		SelectedLine emptyLine = { i, -1, -1, false, {} };
@@ -30,9 +28,6 @@ void SelectedText::AddLine(SelectedLine line) {
 }
 
 void SelectedText::RemoveLine(SelectedLine line) {
-	//if (selectedCount == 0) return;
-
-	selectedCount -= lines.back().positions.size();
 	SelectedLine emptyLine = { line.currentLine - 1, -1, -1, false, {} };
 	lines[line.currentLine - 1] = emptyLine;
 }
@@ -40,16 +35,12 @@ void SelectedText::RemoveLine(SelectedLine line) {
 void SelectedText::AddPos(SelectedPos pos) {
 	lines[pos.currentLine - 1].positions.emplace_back(pos);
 	lines[pos.currentLine - 1].endPos++;
-	//selectedCount++;
 }
 
 void SelectedText::RemovePos(SelectedPos pos) {
-	//if (selectedCount == 0) return;
 	lines[pos.currentLine - 1].completed = false;
 	lines[pos.currentLine - 1].positions.pop_back();
 	lines[pos.currentLine - 1].endPos--;
-
-	selectedCount--;
 }
 
 void SelectedText::Clear() {
@@ -74,17 +65,3 @@ int SelectedText::GetScrollPos() {
 SelectedPos SelectedText::GetFirstPosX() {
 	return lines[firstPosLine].positions[0];
 }
-
-SelectedPos SelectedText::GetLastPosX() {
-	SelectedPos lastPos;
-
-	for (SelectedLine line : lines) {
-		if (line.startPos != -1) {
-			lastPos = line.positions.back();
-		}
-	}
-	
-	return lastPos;
-}
-
-
