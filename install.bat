@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal EnableDelayedExpansion
 
 REM 1) Variables
 set "SRC_DIR=VimoText"
@@ -13,16 +13,16 @@ if not exist "%SRC_DIR%" (
 )
 
 REM 3) Compilar
-echo Compilando %SRC_DIR%\*.cpp en %EXEC%...
+echo Compilando %SRC_DIR%\*.cpp → %EXEC%...
 g++ "%SRC_DIR%\*.cpp" -o "%EXEC%"
 if errorlevel 1 (
-  echo Error en compilacion.
+  echo Error en compilación.
   exit /b 1
 )
 
 REM 4) Crear carpeta de bin si hace falta
 if not exist "%TARGET%" (
-  echo Creando carpeta %TARGET%...
+  echo Creando carpeta "%TARGET%"...
   mkdir "%TARGET%"
 )
 
@@ -30,19 +30,22 @@ REM 5) Copiar ejecutable
 echo Copiando %EXEC% a %TARGET%...
 copy /Y "%EXEC%" "%TARGET%\" >nul
 
-REM 6) Añadir al PATH de usuario si no está
-echo Revisando PATH de usuario...
-echo %PATH% | find /I "%TARGET%" >nul
+REM 6) Leer el PATH de usuario desde el registro
+for /f "skip=2 tokens=2,*" %%A in ('
+  reg query "HKCU\Environment" /v PATH
+') do set "UPATH=%%B"
+
+REM 7) Verificar si ya está en PATH
+echo %UPATH% | find /I "%TARGET%" >nul
 if errorlevel 1 (
-  echo Agregando %TARGET% a PATH de usuario...
-  setx PATH "%PATH%;%TARGET%" >nul
+  echo Agregando "%TARGET%" al PATH de usuario...
+  set "NEWUPATH=!UPATH!;%TARGET%"
+  setx PATH "!NEWUPATH!" >nul
   echo ✔ PATH actualizado.
 ) else (
-  echo %TARGET% ya esta en PATH.
+  echo ℹ "%TARGET%" ya está en el PATH de usuario.
 )
 
 echo.
-echo 🎉 Instalacion completada.
-echo Ahora puedes ejecutar "vimc" desde cualquier carpeta.
-endlocal
+echo 🎉 Instalación completada. Cierra y vuelve a abrir la terminal.
 pause
