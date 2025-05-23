@@ -73,6 +73,9 @@ It keeps an undo/redo history and lets you save and load files, all without leav
 | `O`     | **Open** new line **above** (enter Insert mode)   |
 
 ---
+## 📜 A Bit of History
+
+My first text editor was built in Node.js. It was extremely basic, only capable of opening files and appending text to the end. Driven by curiosity about how editors navigate and modify text, I reimplemented the idea in C. That initial C version never saw completion: I got stuck on undo/redo modules, the Piece Table was riddled with bugs, and rendering was clunky. Undeterred, I tried again in C. The Piece Table became more stable, undo/redo worked sporadically, and rendering improved slightly. Finally, this latest incarnation in C++ brought everything together, performance is solid and features behave reliably, even if the code could be cleaner. What will I tackle next time, and what leap will I make?  
 
 ## 🎯 Takeaways & Lessons Learned
 
@@ -89,6 +92,13 @@ During this project I **did not** initially apply several best practices, and by
 
 - **Automated Builds & Installs:**  
   I relied on manual scripts rather than a proper build system. Failing to use tools like CMake or containers showed me the importance of automating compilation and installation across different environments.
+
+- **Testing Coverage:**  
+  I wrote unit tests for the Piece Table, but due to a less modular architecture I couldn’t adequately test command execution logic. This taught me to structure code for full testability, not just isolated components.
+
+- **Data Structure Design:**  
+  While I created a very efficient Piece Table for the main buffer, I didn’t spend enough time optimizing the data structure for managing selected text. Next time, I’ll give equal attention to all core data structures.
+
 
 By realizing what I missed, these lessons will now be integral to every future project.
 
